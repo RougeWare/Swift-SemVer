@@ -21,16 +21,15 @@ class Semantic_VersioningTests: XCTestCase {
         super.tearDown()
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    func testDescription() {
+        XCTAssertEqual(SemVer(01,2,3,"RC.4",567).description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3,["RC","4"],567).description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3,["RC","4"],[567]).description, "1.2.3-RC.4+567")
     }
     
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
-    }
     
+    @available(OSX 10.13, *)
+    func testFromString() {
+        XCTAssertEqual(SemVer("1.2.3-RC.4+567"), SemVer(major: 1, minor: 2, patch: 3, preRelease: SemanticVersionPreRelease(identifiers: ["RC", "4"]), build: SemanticVersionBuild(identifiers: ["567"])))
+    }
 }

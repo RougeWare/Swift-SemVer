@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B55D1C7B200B1C7500B93473 /* Conveniences.swift in Sources */ = {isa = PBXBuildFile; fileRef = B55D1C7A200B1C7500B93473 /* Conveniences.swift */; };
 		B584BC2B2005CC73001BF1C3 /* Semantic_Versioning.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B584BC212005CC73001BF1C3 /* Semantic_Versioning.framework */; };
 		B584BC302005CC73001BF1C3 /* Semantic_VersioningTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B584BC2F2005CC73001BF1C3 /* Semantic_VersioningTests.swift */; };
 		B584BC322005CC73001BF1C3 /* Semantic_Versioning.h in Headers */ = {isa = PBXBuildFile; fileRef = B584BC242005CC73001BF1C3 /* Semantic_Versioning.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		B584BC3C2005CC86001BF1C3 /* Semantic Version.swift in Sources */ = {isa = PBXBuildFile; fileRef = B584BC3B2005CC86001BF1C3 /* Semantic Version.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -23,12 +25,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		B55D1C7A200B1C7500B93473 /* Conveniences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conveniences.swift; sourceTree = "<group>"; };
 		B584BC212005CC73001BF1C3 /* Semantic_Versioning.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Semantic_Versioning.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B584BC242005CC73001BF1C3 /* Semantic_Versioning.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Semantic_Versioning.h; sourceTree = "<group>"; };
 		B584BC252005CC73001BF1C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B584BC2A2005CC73001BF1C3 /* Semantic VersioningTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Semantic VersioningTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B584BC2F2005CC73001BF1C3 /* Semantic_VersioningTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Semantic_VersioningTests.swift; sourceTree = "<group>"; };
 		B584BC312005CC73001BF1C3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B584BC3B2005CC86001BF1C3 /* Semantic Version.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Semantic Version.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +77,8 @@
 			children = (
 				B584BC242005CC73001BF1C3 /* Semantic_Versioning.h */,
 				B584BC252005CC73001BF1C3 /* Info.plist */,
+				B584BC3B2005CC86001BF1C3 /* Semantic Version.swift */,
+				B55D1C7A200B1C7500B93473 /* Conveniences.swift */,
 			);
 			path = "Semantic Versioning";
 			sourceTree = "<group>";
@@ -148,6 +154,7 @@
 				TargetAttributes = {
 					B584BC202005CC73001BF1C3 = {
 						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = 0920;
 						ProvisioningStyle = Automatic;
 					};
 					B584BC292005CC73001BF1C3 = {
@@ -196,6 +203,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B584BC3C2005CC86001BF1C3 /* Semantic Version.swift in Sources */,
+				B55D1C7B200B1C7500B93473 /* Conveniences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,6 +342,7 @@
 		B584BC362005CC73001BF1C3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -347,6 +357,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "me.benleggiero.Semantic-Versioning";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
@@ -354,6 +365,7 @@
 		B584BC372005CC73001BF1C3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -375,6 +387,7 @@
 		B584BC392005CC73001BF1C3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "Semantic VersioningTests/Info.plist";
@@ -388,6 +401,7 @@
 		B584BC3A2005CC73001BF1C3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = "Semantic VersioningTests/Info.plist";
