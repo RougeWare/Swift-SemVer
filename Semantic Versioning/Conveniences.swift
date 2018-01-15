@@ -116,3 +116,31 @@ extension UInt: ObjcComparable {
         }
     }
 }
+
+
+
+extension Int: ObjcComparable {
+    func compare(to other: Int) -> ComparisonResult {
+        if self == other {
+            return .orderedSame
+        }
+        else if self < other {
+            return .orderedAscending
+        }
+        else {
+            return .orderedDescending
+        }
+    }
+}
+
+
+
+public extension NSRange {
+    /// If this represents a null or unfound range, this returns `nil`; else, this returns the range itself
+    public var orNil: NSRange? {
+        if location == NSNotFound {
+            return nil
+        }
+        return self
+    }
+}

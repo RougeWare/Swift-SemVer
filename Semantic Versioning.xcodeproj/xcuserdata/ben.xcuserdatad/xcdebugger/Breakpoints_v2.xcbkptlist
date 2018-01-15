@@ -9,61 +9,14 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Semantic VersioningTests/Semantic_VersioningTests.swift"
-            timestampString = "537690463.578217"
+            filePath = "Semantic Versioning/Semantic Version.swift"
+            timestampString = "537698778.875371"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "33"
-            endingLineNumber = "33"
-            landmarkName = "testFromString()"
+            startingLineNumber = "260"
+            endingLineNumber = "260"
+            landmarkName = "&lt;(_:_:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "Semantic_VersioningTests.Semantic_VersioningTests.testFromString() -&gt; ()"
-                  moduleName = "Semantic VersioningTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Projects/Semantic%20Versioning/Semantic%20VersioningTests/Semantic_VersioningTests.swift"
-                  timestampString = "537690464.533448"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "33"
-                  endingLineNumber = "33"
-                  offsetFromSymbolStart = "39">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "implicit closure #1 : @autoclosure () throws -&gt; Swift.Optional&lt;Semantic_Versioning.SemanticVersion&gt; in Semantic_VersioningTests.Semantic_VersioningTests.testFromString() -&gt; ()"
-                  moduleName = "Semantic VersioningTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Projects/Semantic%20Versioning/Semantic%20VersioningTests/Semantic_VersioningTests.swift"
-                  timestampString = "537690464.535018"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "33"
-                  endingLineNumber = "33"
-                  offsetFromSymbolStart = "4">
-               </Location>
-               <Location
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "implicit closure #2 : @autoclosure () throws -&gt; Swift.Optional&lt;Semantic_Versioning.SemanticVersion&gt; in Semantic_VersioningTests.Semantic_VersioningTests.testFromString() -&gt; ()"
-                  moduleName = "Semantic VersioningTests"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/ben/Projects/Semantic%20Versioning/Semantic%20VersioningTests/Semantic_VersioningTests.swift"
-                  timestampString = "537690464.5364209"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "33"
-                  endingLineNumber = "33"
-                  offsetFromSymbolStart = "4">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

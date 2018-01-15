@@ -14,9 +14,21 @@ public typealias SemVer = SemanticVersion
 
 
 
-/// An implementation of Semantic Version 2.0.0, which is copyrighted to Tom Preston-Werner CC BY 3.0
+/// An implementation of Semantic Version 2.0.0, which is copyrighted to Tom Preston-Werner CC BY 3.0.
 ///
 /// See the spec here: https://semver.org/spec/v2.0.0.html
+///
+/// This is designed to be as easy as possible to use. You may use the extremely-verbose and explicit initializer which
+/// labels every parameter, or the one that does the same thing but excludes the labels, or the one that simply takes
+/// any valid SemVer string and gently fails to `nil` if that string is invalid. You are encouraged to use whichever
+/// one of these suits the needs at the time of use. Some examples are included in the unit tests.
+///
+/// Keep in mind that the pre-release and build extensions can be easily represented as string- and integer-literals.
+/// For instance, `SemVer(1,2, SemVer.Build(identifiers: ["123", "4"]))` has the same result as `SemVer(1,2, "123.4")`.
+/// Again, this is done for ease-of-use. `SemVer` itself would also be expressible by a string literal, but it has too
+/// many resrictions so a failable initializer is presented instead.
+///
+/// This also already conforms to `Comparable`, since comparison and precedence are a major part of the spec.
 public struct SemanticVersion {
     
     public typealias Identifier = SemanticVersionIdentifier
@@ -89,29 +101,22 @@ public struct SemanticVersion {
     }
     
     
+    /// Create a new Semantic Version with explicit (yet unlabelled) parts
+    ///
+    /// - Parameters:
+    ///   - major: The MAJOR version
+    ///   - minor: The MINOR version
+    ///   - patch: The PATCH version
+    ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
+    ///   - build: The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
     public init(_ major: Major, _ minor: Minor, _ patch: Patch? = nil, _ preRelease: PreRelease? = nil, _ build: Build? = nil) {
         self.init(major: major, minor: minor, patch: patch, preRelease: preRelease, build: build)
     }
-    
-    
-//    public init(major: Major, minor: Minor, patch: Patch? = nil,
-//                preRelease: CustomStringConvertible? = nil, build: CustomStringConvertible? = nil) {
-//        self.init(major: major, minor: minor, patch: patch,
-//                  preRelease: preRelease.flatMap { PreRelease($0) },
-//                  build: build.flatMap { Build($0) }
-//        )
-//    }
-//
-//
-//    public init(_ major: Major, _ minor: Minor, _ patch: Patch? = nil,
-//                _ preRelease: CustomStringConvertible? = nil, _ build: CustomStringConvertible? = nil) {
-//        self.init(major: major, minor: minor, patch: patch, preRelease: preRelease, build: build)
-//    }
 }
 
 
 
-/// A single piece of a semantic version, like `minor`
+/// A single piece of a semantic version, like `minor` or `build`
 public protocol SemanticVersionIdentifier {}
 
 
@@ -120,15 +125,23 @@ extension UInt: SemanticVersion.Identifier {}
 
 
 
+/// An extension to a semantic version. Currently, only pre-release and build extensions are supported.
 public protocol SemanticVersionExtension: SemanticVersion.Identifier, CustomStringConvertible,
         ExpressibleByArrayLiteral, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral, Comparable {
     
+    /// A piece of the extension. For instance, in the pre-release extension `RC.1`, the identifiers are `RC` and `1`.
     typealias Identifier = String
     
+    /// All idenntifiers in this extension
     var identifiers: [Identifier] { get }
     
-    static var prefix: String { get }
+    /// The character that precedes this extension when it appears in a SemVer.
+    /// For example, the `-` in `1.0-RC.1`, or the + in `1.0+123`.
+    static var prefix: Character { get }
     
+    /// Creates a new SemVer extension with the given identifiers
+    ///
+    /// - Parameter identifiers: All identifiers of this extension
     init(identifiers: [Identifier])
 }
 
@@ -137,6 +150,7 @@ public protocol SemanticVersionExtension: SemanticVersion.Identifier, CustomStri
 public extension SemanticVersion {
     
     /// Indicates whether this version number implies an _initial_ development build, which could change ay any time.
+    /// If this returns `true`, the build may change drastically at any time and must not be considered stable.
     ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-4
     public var isInitialDevelopment: Bool {
@@ -157,6 +171,7 @@ public extension SemanticVersion {
 
 extension SemanticVersion: CustomStringConvertible {
     
+    /// A regular expression which matches and convenienctly groups all Semantic Version strings
     public static let regex = try! NSRegularExpression(pattern:
         "^(?<major>\\d+)\\." +
         "(?<minor>\\d+)" +
@@ -166,6 +181,8 @@ extension SemanticVersion: CustomStringConvertible {
                                                        options: .caseInsensitive)
     
     
+    /// If possible, this creates a new `SemanticVersion` out of the given string. As long as the given string conforms
+    /// to SemVer 2.0.0, this will succeed. If it does not, this will return `nil`.
     public init?(_ stringValue: String) {
         let matches = SemVer.regex.matches(in: stringValue, options: [], range: NSRange(location: 0, length: stringValue.count))
         if #available(OSX 10.13, *) {
@@ -183,7 +200,8 @@ extension SemanticVersion: CustomStringConvertible {
             
             self.preRelease = matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) }
             self.build = matches[0].group("build", in: stringValue).flatMap { Build($0) }
-        } else {
+        }
+        else { // FIXME: Remove ASAP
             guard
                 !matches.isEmpty,
                 let major = matches[0].group(1, in: stringValue).flatMap({ Major($0) }),
@@ -202,6 +220,7 @@ extension SemanticVersion: CustomStringConvertible {
     }
     
     
+    /// The standard String form of a semantic version
     public var description: String {
         return concat("\(major).\(minor)",
             (patch.map { ".\($0)" } ?? ""),
@@ -257,6 +276,7 @@ extension SemanticVersion: Comparable {
         }
     }
     
+    
     public static func ==(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
         return lhs.major == rhs.major
             && lhs.minor == rhs.minor
@@ -269,7 +289,7 @@ extension SemanticVersion: Comparable {
 
 public struct SemanticVersionPreRelease: SemanticVersion.Extension {
 
-    public static let prefix: String = "-"
+    public static let prefix: Character = "-"
     
     public var identifiers: [Identifier]
     
@@ -283,7 +303,7 @@ public struct SemanticVersionPreRelease: SemanticVersion.Extension {
 
 public struct SemanticVersionBuild: SemanticVersion.Extension {
     
-    public static let prefix: String = "+"
+    public static let prefix: Character = "+"
     
     public var identifiers: [Identifier]
     
@@ -306,7 +326,7 @@ public extension SemanticVersion.Extension {
         return identifiers.joined(separator: ".")
     }
     public var descriptionWithPrefix: String {
-        return type(of: self).prefix + description
+        return "\(type(of: self).prefix)\(description)"
     }
     
     
@@ -360,7 +380,9 @@ public extension SemanticVersion.Extension {
             return .orderedSame
         }
         
-        let zipped = lhs.identifiers.zip(with: rhs.identifiers)
+        let (lhsIds, rhsIds) = (lhs.identifiers, rhs.identifiers)
+        
+        let zipped = lhsIds.zip(with: rhsIds)
         
         for (lhsId, rhsId) in zipped {
             if let lhsInt = UInt(lhsId) {
@@ -394,9 +416,11 @@ public extension SemanticVersion.Extension {
             }
         }
         
-        // If we got here, all items are equal, but that was somehow not caught in the shortcut
+        // If we got here, all items are equal, so the only unequal items must be those in a longer identifier list
         
-        return .orderedSame
+        // Longer identifier lists have higher precedence
+        
+        return lhsIds.count.compare(to: rhsIds.count)
     }
     
     
@@ -411,12 +435,18 @@ public extension SemanticVersion.Extension {
 private extension NSTextCheckingResult {
     
     func group(_ groupIndex: Int, in string: String) -> Substring? {
-        return _group(range: self.range(at: groupIndex), in: string)
+        guard let range = self.range(at: groupIndex).orNil else {
+            return nil
+        }
+        return _group(range: range, in: string)
     }
     
-    @available(macOS 10.13, *)
+    @available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *)
     func group(_ groupName: String, in string: String) -> Substring? {
-        return _group(range: range(withName: groupName), in: string)
+        guard let range = self.range(withName: groupName).orNil else {
+            return nil
+        }
+        return _group(range: range, in: string)
     }
     
     
