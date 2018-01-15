@@ -83,6 +83,10 @@ func isAscending<T: Comparable>(_ lhs: T?, _ rhs: T?, isLessThanNil: (T) -> Bool
 
 
 extension Sequence {
+    /// A different syntax for `Swift.zip(_:_:)`. See `Swift.zip(_:_:)` for the exact behavior.
+    ///
+    /// - Parameter other: The other sequence to zip this one with
+    /// - Returns: This sequence zipped with the other one
     func zip<Other: Sequence>(with other: Other) -> Zip2Sequence<Self, Other> {
         return Swift.zip(self, other)
     }
@@ -91,19 +95,31 @@ extension Sequence {
 
 
 extension ComparisonResult {
-    public static let lhsHasPrecedence = ComparisonResult.orderedDescending
-    public static let rhsHasPrecedence = ComparisonResult.orderedAscending
+    /// A semantic alias for `.orderedDescending`
+    public static var lhsHasPrecedence: ComparisonResult { return .orderedDescending }
+    
+    /// A semantic alias for `.orderedAscending`
+    public static var rhsHasPrecedence: ComparisonResult { return .orderedAscending }
 }
 
 
 
+/// The old Objective-C style of `Comparable`, where the comparison operaton returns `<`, `==`, or `>`
 protocol ObjcComparable {
+    /// Compares this and the other objects, and returns the comparison result
+    ///
+    /// - Parameter other: The object to compare to this one
+    /// - Returns: The result of the comparison
     func compare(to other: Self) -> ComparisonResult
 }
 
 
 
 extension UInt: ObjcComparable {
+    /// Compares this to the other `UInt`
+    ///
+    /// - Parameter other: The `UInt` to compare to this one
+    /// - Returns: The result of the comparison
     func compare(to other: UInt) -> ComparisonResult {
         if self == other {
             return .orderedSame
@@ -120,6 +136,10 @@ extension UInt: ObjcComparable {
 
 
 extension Int: ObjcComparable {
+    /// Compares this to the other `Int`
+    ///
+    /// - Parameter other: The `Int` to compare to this one
+    /// - Returns: The result of the comparison
     func compare(to other: Int) -> ComparisonResult {
         if self == other {
             return .orderedSame

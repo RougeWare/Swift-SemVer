@@ -277,11 +277,22 @@ extension SemanticVersion: Comparable {
     }
     
     
+    /// Determines whether the given two semantic versions are equivalent. Equivalence is implied by the precedence
+    /// rules laid out in SemVer 2.0.0 paragraph 11: https://semver.org/spec/v2.0.0.html#spec-item-11
+    ///
+    /// Note that they don't have to be __equal__, in the traditional sense. For instance, `"1.0" == "1.0.0"` and
+    /// `"1.2.3+45" == "1.2.3+67"`.
+    ///
+    /// - Parameters:
+    ///   - lhs: The first version to compare
+    ///   - rhs: The second version to compare
+    /// - Returns: `true` if the two versions are equivalent
     public static func ==(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
         return lhs.major == rhs.major
             && lhs.minor == rhs.minor
             && isEquivalent(lhs.patch, rhs.patch, isEquivalentToNil: { $0 == 0 })
             && isEquivalent(lhs.preRelease, rhs.preRelease, isEquivalentToNil: { $0 == "" })
+        // According to https://semver.org/spec/v2.0.0.html#spec-item-11, "Build metadata does not figure into precedence"
     }
 }
 
@@ -322,44 +333,76 @@ public extension SemanticVersion.Extension {
     
     
     
+    /// Creates a string of period-separated identifiers, so `["public", "RC", "1"]` would become `"public.RC.1"`
     public var description: String {
         return identifiers.joined(separator: ".")
     }
+    
+    
+    /// Creates a string suitable for naïve concatenation with a semantic version string.
+    /// For example, a pre-release extension like `["RC", "1"]` would become `"-RC.1"`, and a build like
+    /// `["2018", "01", "15"]` would become `"+2018.01.15"`.
     public var descriptionWithPrefix: String {
         return "\(type(of: self).prefix)\(description)"
     }
     
     
+    /// Creates a new extension by converting the given array into an array of strings
+    ///
+    /// - Parameter identifiers: Soon-to-be identifiers
     public init(identifiers: [CustomStringConvertible]) {
         self.init(identifiers: identifiers.map { $0.description })
     }
     
     
+    #if swift(>=4)
+    /// Creates a new extension by separating the given raw string by any periods in it
+    ///
+    /// - Parameter rawString: A raw representation of a semantic version string.
+    ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     public init(_ rawString: Substring) {
         self.init(identifiers: rawString.split(separator: ".").map { String($0) })
     }
+    #endif
     
     
+    /// Creates a new extension by separating the given raw string by any periods in it
+    ///
+    /// - Parameter rawString: A raw representation of a semantic version string.
+    ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     public init(_ rawString: String) {
         self.init(identifiers: rawString.split(separator: ".").map { String($0) })
     }
     
     
+    /// Creates a new extension by converting the given varargs into an array of strings
+    ///
+    /// - Parameter identifiers: Soon-to-be identifiers
     public init(_ identifiers: CustomStringConvertible...) {
         self.init(identifiers: identifiers)
     }
     
     
+    /// Creates a new extension by converting the given array/varargs into an array of strings
+    ///
+    /// - Parameter identifiers: Soon-to-be identifiers
     public init(arrayLiteral elements: CustomStringConvertible...) {
         self.init(identifiers: elements)
     }
     
     
+    /// Creaetes a new extension by converting the given integer into a string and assuming that is the only identifier
+    ///
+    /// - Parameter value: The only identifier, to become a string
     public init(integerLiteral value: UInt) {
-        self.init(value)
+        self.init(identifiers: [value])
     }
     
     
+    /// Creates a new extension by separating the given raw string by any periods in it
+    ///
+    /// - Parameter rawString: A raw representation of a semantic version string.
+    ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     public init(stringLiteral value: String) {
         self.init(value)
     }
@@ -369,11 +412,27 @@ public extension SemanticVersion.Extension {
 
 public extension SemanticVersion.Extension {
     
+    /// Determines whether the given two SemVer extensions are in ascending order. This attempts to exactly match the
+    /// behavior described in the SemVer 2.0.0 spec paragraph 11: https://semver.org/spec/v2.0.0.html#spec-item-11
+    ///
+    /// - Parameters:
+    ///   - lhs: The first extension to compare
+    ///   - rhs: The second extension to compare
+    /// - Returns: `true` iff `lhs` is less than, or has lower precedence than, `rhs`. If they have the same
+    ///            precedence, this will still return `false`.
+    /// - Note:  To determine the exact order, use `compare(lhs:rhs:)`
     public static func <(lhs: Self, rhs: Self) -> Bool {
         return compare(lhs: lhs, rhs: rhs) == .orderedAscending
     }
     
     
+    /// Compares two SemVer extensions and returns the determined order. This attempts to exactly match the
+    /// behavior described in the SemVer 2.0.0 spec paragraph 11: https://semver.org/spec/v2.0.0.html#spec-item-11
+    ///
+    /// - Parameters:
+    ///   - lhs: The first extension to compare
+    ///   - rhs: The second extension to compare
+    /// - Returns: The order of the extensions
     public static func compare(lhs: Self, rhs: Self) -> ComparisonResult {
         
         if lhs == rhs {
@@ -424,6 +483,12 @@ public extension SemanticVersion.Extension {
     }
     
     
+    /// Determines whether one SemVer 2.0.0 extension is equal to another
+    ///
+    /// - Parameters:
+    ///   - lhs: One extension
+    ///   - rhs: Another extension
+    /// - Returns: `true` iff the given two extensions are equal
     public static func ==(lhs: Self, rhs: Self) -> Bool {
         let (lhsIds, rhsIds) = (lhs.identifiers, rhs.identifiers)
         return lhsIds.count == rhsIds.count && !lhsIds.zip(with: rhsIds).contains(where: { $0.0 != $0.1 })
@@ -434,15 +499,33 @@ public extension SemanticVersion.Extension {
 
 private extension NSTextCheckingResult {
     
-    func group(_ groupIndex: Int, in string: String) -> Substring? {
+    #if swift(>=4)
+    typealias StringOrSubstring = Substring
+    #else
+    typealias StringOrSubstring = String
+    #endif
+    
+    /// Finds the group located at the given index in this text checking result, within the given string
+    ///
+    /// - Parameters:
+    ///   - groupIndex: The index of the group
+    ///   - string:     The string to search
+    /// - Returns: The substring at the given group index, or `nil` if there is none
+    func group(_ groupIndex: Int, in string: String) -> StringOrSubstring? {
         guard let range = self.range(at: groupIndex).orNil else {
             return nil
         }
         return _group(range: range, in: string)
     }
     
+    /// Finds the group with the given name in this text checking result, within the given string
+    ///
+    /// - Parameters:
+    ///   - groupName: The name of the group
+    ///   - string:    The string to search
+    /// - Returns: The substring at the given group index, or `nil` if there is none
     @available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *)
-    func group(_ groupName: String, in string: String) -> Substring? {
+    func group(_ groupName: String, in string: String) -> StringOrSubstring? {
         guard let range = self.range(withName: groupName).orNil else {
             return nil
         }
@@ -450,9 +533,22 @@ private extension NSTextCheckingResult {
     }
     
     
-    private func _group(range: NSRange, in string: String) -> Substring? {
+    /// The base of the other `group(_:in:)` functions; simply returns the substring of the given string at the given
+    /// range, iff that range is valid. If the range is invalid (e.g. if it's not inside the string or location is `NSNotFound`)
+    ///
+    /// - Parameters:
+    ///   - range:  The range of characters to return
+    ///   - string: The string to search
+    /// - Returns: The substring at the given range, or `nil` if there is none
+    private func _group(range: NSRange, in string: String) -> StringOrSubstring? {
+        guard range.location != NSNotFound else {
+            return nil
+        }
         let startingIndex = string.index(string.startIndex, offsetBy: range.location)
         let endingIndex = string.index(startingIndex, offsetBy: range.length)
+        guard string.endIndex >= endingIndex else {
+            return nil
+        }
         return string[startingIndex..<endingIndex]
     }
 }
