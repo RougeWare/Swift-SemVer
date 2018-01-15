@@ -87,11 +87,11 @@ public struct SemanticVersion {
     /// Create a new Semantic Version with explicit parts
     ///
     /// - Parameters:
-    ///   - major: The MAJOR version
-    ///   - minor: The MINOR version
-    ///   - patch: The PATCH version
+    ///   - major:      The MAJOR version
+    ///   - minor:      The MINOR version
+    ///   - patch:      The PATCH version
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
-    ///   - build: The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
+    ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
     public init(major: Major, minor: Minor, patch: Patch? = nil, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.major = major
         self.minor = minor
@@ -104,12 +104,12 @@ public struct SemanticVersion {
     /// Create a new Semantic Version with explicit (yet unlabelled) parts
     ///
     /// - Parameters:
-    ///   - major: The MAJOR version
-    ///   - minor: The MINOR version
-    ///   - patch: The PATCH version
+    ///   - major:      The MAJOR version
+    ///   - minor:      The MINOR version
+    ///   - patch:      The PATCH version
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
-    ///   - build: The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
-    public init(_ major: Major, _ minor: Minor, _ patch: Patch? = nil, _ preRelease: PreRelease? = nil, _ build: Build? = nil) {
+    ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
+    public init(_ major: Major, _ minor: Minor, _ patch: Patch? = nil, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.init(major: major, minor: minor, patch: patch, preRelease: preRelease, build: build)
     }
 }
