@@ -1,9 +1,9 @@
 //
 //  Semantic Version.swift
-//  Semantic Versioning
+//  SemVer
 //
 //  Created by Ben Leggiero on 2018-01-09.
-//  Copyright © 2018 Ben Leggiero. All rights reserved.
+//  Copyright © 2018 Ben Leggiero BH-1-PS.
 //
 
 import Foundation

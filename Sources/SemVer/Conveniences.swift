@@ -1,9 +1,9 @@
 //
 //  Conveniences.swift
-//  Semantic Versioning
+//  SemVer
 //
-//  Created by Personal on 1/14/18.
-//  Copyright © 2018 Ben Leggiero. All rights reserved.
+//  Created by Personal on 2018-01-14.
+//  Copyright © 2018 Ben Leggiero BH-1-PS.
 //
 
 import Foundation

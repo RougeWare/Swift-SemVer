@@ -1,15 +1,15 @@
 //
-//  Semantic_VersioningTests.swift
-//  Semantic VersioningTests
+//  SemVerTests.swift
+//  SemVer
 //
-//  Created by Personal on 1/9/18.
-//  Copyright © 2018 Ben Leggiero. All rights reserved.
+//  Created by Personal on 2018-01-09.
+//  Copyright © 2018 Ben Leggiero BH-1-PS.
 //
 
 import XCTest
-@testable import Semantic_Versioning
+@testable import SemVer
 
-class Semantic_VersioningTests: XCTestCase {
+class SemVerTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
@@ -87,4 +87,14 @@ class Semantic_VersioningTests: XCTestCase {
         XCTAssertEqual(SemVer(1,2,3), SemVer("1.02.3"))
         XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.03"))
     }
+    
+
+    static var allTests = [
+        ("testDescription", testDescription),
+        ("testFromString", testFromString),
+        ("testPrecedence", testPrecedence),
+        ("testEquivalence", testEquivalence),
+        ("testInvalid", testInvalid),
+        ("testBasicFixes", testBasicFixes),
+    ]
 }
