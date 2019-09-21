@@ -3,7 +3,7 @@
 //  SemVer
 //
 //  Created by Personal on 2018-01-14.
-//  Copyright © 2018 Ben Leggiero BH-1-PS.
+//  Copyright © 2019 Ben Leggiero BH-1-PS.
 //
 
 import Foundation
