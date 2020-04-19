@@ -2,8 +2,8 @@
 //  Conveniences.swift
 //  SemVer
 //
-//  Created by Personal on 2018-01-14.
-//  Copyright © 2019 Ben Leggiero BH-1-PS.
+//  Created by Ben Leggiero on 2018-01-14.
+//  Copyright © 2020 Ben Leggiero BH-1-PS.
 //
 
 import Foundation
