@@ -157,7 +157,7 @@ extension Int: ObjcComparable {
 
 public extension NSRange {
     /// If this represents a null or unfound range, this returns `nil`; else, this returns the range itself
-    public var orNil: NSRange? {
+    var orNil: NSRange? {
         if location == NSNotFound {
             return nil
         }
