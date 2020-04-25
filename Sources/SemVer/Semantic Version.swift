@@ -153,7 +153,7 @@ public extension SemanticVersion {
     /// If this returns `true`, the build may change drastically at any time and must not be considered stable.
     ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-4
-    public var isInitialDevelopment: Bool {
+    var isInitialDevelopment: Bool {
         return major == 0
     }
     
@@ -162,7 +162,7 @@ public extension SemanticVersion {
     /// number will accurately reflect changes to the build.
     ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-5
-    public var isPublic: Bool {
+    var isPublic: Bool {
         return major > 0
     }
 }
@@ -328,13 +328,13 @@ public struct SemanticVersionBuild: SemanticVersion.Extension {
 
 public extension SemanticVersion.Extension {
     
-    public typealias PreRelease = SemanticVersionPreRelease
-    public typealias Build = SemanticVersionBuild
+    typealias PreRelease = SemanticVersionPreRelease
+    typealias Build = SemanticVersionBuild
     
     
     
     /// Creates a string of period-separated identifiers, so `["public", "RC", "1"]` would become `"public.RC.1"`
-    public var description: String {
+    var description: String {
         return identifiers.joined(separator: ".")
     }
     
@@ -342,7 +342,7 @@ public extension SemanticVersion.Extension {
     /// Creates a string suitable for naïve concatenation with a semantic version string.
     /// For example, a pre-release extension like `["RC", "1"]` would become `"-RC.1"`, and a build like
     /// `["2018", "01", "15"]` would become `"+2018.01.15"`.
-    public var descriptionWithPrefix: String {
+    var descriptionWithPrefix: String {
         return "\(type(of: self).prefix)\(description)"
     }
     
@@ -350,7 +350,7 @@ public extension SemanticVersion.Extension {
     /// Creates a new extension by converting the given array into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    public init(identifiers: [CustomStringConvertible]) {
+    init(identifiers: [CustomStringConvertible]) {
         self.init(identifiers: identifiers.map { $0.description })
     }
     
@@ -360,7 +360,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    public init(_ rawString: Substring) {
+    init(_ rawString: Substring) {
         self.init(identifiers: rawString.split(separator: ".").map { String($0) })
     }
     #endif
@@ -370,7 +370,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    public init(_ rawString: String) {
+    init(_ rawString: String) {
         self.init(identifiers: rawString.split(separator: ".").map { String($0) })
     }
     
@@ -378,7 +378,7 @@ public extension SemanticVersion.Extension {
     /// Creates a new extension by converting the given varargs into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    public init(_ identifiers: CustomStringConvertible...) {
+    init(_ identifiers: CustomStringConvertible...) {
         self.init(identifiers: identifiers)
     }
     
@@ -386,7 +386,7 @@ public extension SemanticVersion.Extension {
     /// Creates a new extension by converting the given array/varargs into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    public init(arrayLiteral elements: CustomStringConvertible...) {
+    init(arrayLiteral elements: CustomStringConvertible...) {
         self.init(identifiers: elements)
     }
     
@@ -394,7 +394,7 @@ public extension SemanticVersion.Extension {
     /// Creaetes a new extension by converting the given integer into a string and assuming that is the only identifier
     ///
     /// - Parameter value: The only identifier, to become a string
-    public init(integerLiteral value: UInt) {
+    init(integerLiteral value: UInt) {
         self.init(identifiers: [value])
     }
     
@@ -403,7 +403,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    public init(stringLiteral value: String) {
+    init(stringLiteral value: String) {
         self.init(value)
     }
 }
@@ -421,7 +421,7 @@ public extension SemanticVersion.Extension {
     /// - Returns: `true` iff `lhs` is less than, or has lower precedence than, `rhs`. If they have the same
     ///            precedence, this will still return `false`.
     /// - Note:  To determine the exact order, use `compare(lhs:rhs:)`
-    public static func <(lhs: Self, rhs: Self) -> Bool {
+    static func <(lhs: Self, rhs: Self) -> Bool {
         return compare(lhs: lhs, rhs: rhs) == .orderedAscending
     }
     
@@ -433,7 +433,7 @@ public extension SemanticVersion.Extension {
     ///   - lhs: The first extension to compare
     ///   - rhs: The second extension to compare
     /// - Returns: The order of the extensions
-    public static func compare(lhs: Self, rhs: Self) -> ComparisonResult {
+    static func compare(lhs: Self, rhs: Self) -> ComparisonResult {
         
         if lhs == rhs {
             return .orderedSame
@@ -489,7 +489,7 @@ public extension SemanticVersion.Extension {
     ///   - lhs: One extension
     ///   - rhs: Another extension
     /// - Returns: `true` iff the given two extensions are equal
-    public static func ==(lhs: Self, rhs: Self) -> Bool {
+    static func ==(lhs: Self, rhs: Self) -> Bool {
         let (lhsIds, rhsIds) = (lhs.identifiers, rhs.identifiers)
         return lhsIds.count == rhsIds.count && !lhsIds.zip(with: rhsIds).contains(where: { $0.0 != $0.1 })
     }
