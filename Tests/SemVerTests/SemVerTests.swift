@@ -31,12 +31,10 @@ class SemVerTests: XCTestCase {
     
     
     func testFromString() {
-        XCTAssertEqual(SemVer("1.2"), SemVer(major: 1, minor: 2))
         XCTAssertEqual(SemVer("1.2.3"), SemVer(major: 1, minor: 2, patch: 3))
         XCTAssertEqual(SemVer("1.2.3-RC"), SemVer(major: 1, minor: 2, patch: 3, preRelease: SemanticVersionPreRelease(identifiers: ["RC"])))
         XCTAssertEqual(SemVer("1.2.3-4"), SemVer(major: 1, minor: 2, patch: 3, preRelease: SemanticVersionPreRelease(identifiers: [4])))
         XCTAssertEqual(SemVer("1.2.3+567.8"), SemVer(major: 1, minor: 2, patch: 3, build: SemanticVersionBuild(identifiers: [567])))
-        XCTAssertEqual(SemVer("1.2-RC.4+567.8"), SemVer(major: 1, minor: 2, preRelease: SemanticVersionPreRelease(identifiers: ["RC", "4"]), build: SemanticVersionBuild(identifiers: ["567", "8"])))
         XCTAssertEqual(SemVer("1.2.3-RC.4+567.8"), SemVer(major: 1, minor: 2, patch: 3, preRelease: SemanticVersionPreRelease(identifiers: ["RC", "4"]), build: SemanticVersionBuild(identifiers: ["567", "8"])))
         XCTAssertEqual(SemVer("1.2.3-RC.4+567.8"), SemVer(1,2,3, preRelease: ["RC",4], build: [567,8]))
     }
@@ -60,19 +58,29 @@ class SemVerTests: XCTestCase {
     
     
     func testEquivalence() {
-        XCTAssertEqual(SemVer("1.0"), SemVer(major: 1, minor: 0, patch: 0))
-        XCTAssertEqual(SemVer("1.0"), SemVer("1.0.0"))
+        XCTAssertEqual(SemVer(major: 1, minor: 0, patch: 0), SemVer(major: 1, minor: 0, patch: 0))
+        XCTAssertEqual(SemVer("1.0.0"), SemVer(major: 1, minor: 0, patch: 0))
+        XCTAssertEqual(SemVer("1.0.0"), SemVer("1.0.0"))
         // According to https://semver.org/spec/v2.0.0.html#spec-item-11, "Build metadata does not figure into precedence"
         XCTAssertEqual(SemVer("1.0+543"), SemVer("1.0+345"))
-        XCTAssertEqual(SemVer(major: 2, minor: 0, preRelease: ["RC", 1]), SemVer(2,0,0, preRelease: ["RC",1]))
-        XCTAssertEqual(SemVer(2,0,0, preRelease: ["RC",1]), SemVer("2.0-RC.1"))
-        XCTAssertEqual(SemVer("2.0-RC.1"), SemVer("2.0.0-RC.1"))
+        XCTAssertEqual(SemVer(major: 2, minor: 0, patch: 0, preRelease: ["RC", 1]), SemVer(2,0,0, preRelease: ["RC",1]))
+        XCTAssertEqual(SemVer(2,0,0, preRelease: ["RC",1]), SemVer("2.0.0-RC.1"))
+        XCTAssertEqual(SemVer("2.0.0-RC.1"), SemVer("2.0.0-RC.1"))
+        XCTAssertEqual(SemVer("2.0.0-RC.1+543"), SemVer(major: 2, minor: 0, patch: 0, preRelease: ["RC", 1], build: 543))
+        XCTAssertEqual(SemVer("2.0.0-RC.1+543"), SemVer(major: 2, minor: 0, patch: 0, preRelease: ["RC", 1], build: "543"))
+        XCTAssertEqual(SemVer("2.0.0-RC.1+543"), SemVer(major: 2, minor: 0, patch: 0, preRelease: ["RC", 1], build: [543]))
+        XCTAssertEqual(SemVer("2.0.0-RC.1+543"), SemVer(major: 2, minor: 0, patch: 0, preRelease: ["RC", 1], build: ["543"]))
     }
     
     
     func testInvalid() {
         XCTAssertNil(SemVer("Obviously Bad"))
         XCTAssertNil(SemVer("1"))
+        XCTAssertNil(SemVer("1.2"))
+        XCTAssertNil(SemVer("1.2-RC.4"))
+        XCTAssertNil(SemVer("1.2-RC.4+567.8"))
+        XCTAssertNil(SemVer("1.2-RC.4+567"))
+        XCTAssertNil(SemVer("1.2-RC+567.8"))
         XCTAssertNil(SemVer("-2.0"))
         XCTAssertNil(SemVer("2.0-β"))
         XCTAssertNil(SemVer("2.0-beta_1"))

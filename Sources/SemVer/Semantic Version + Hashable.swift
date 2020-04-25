@@ -14,7 +14,7 @@ extension SemanticVersion: Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(major)
         hasher.combine(minor)
-        hasher.combine(patch ?? 0)
+        hasher.combine(patch)
         if let preRelease = preRelease {
             hasher.combine(preRelease)
         }
