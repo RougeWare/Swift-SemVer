@@ -54,6 +54,11 @@ class SemVerTests: XCTestCase {
         XCTAssertLessThan(SemVer("1.0.0-beta.2")!, SemVer("1.0.0-beta.11")!)
         XCTAssertLessThan(SemVer("1.0.0-beta.11")!, SemVer("1.0.0-rc.1")!)
         XCTAssertLessThan(SemVer("1.0.0-rc.1")!, SemVer("1.0.0")!)
+        
+        
+        // Proof of fix of #7 https://github.com/RougeWare/Swift-SemVer/issues/7
+        XCTAssertTrue(SemVer(10,0,0) < SemVer(11,0,0))
+        XCTAssertTrue(SemVer(11,0,0) > SemVer(10,0,0))
     }
     
     

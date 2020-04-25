@@ -61,6 +61,8 @@ func isEquivalent<T: Equatable>(_ lhs: T?, _ rhs: T?, isEquivalentToNil: (T) -> 
 ///                         non-`nil` value as if it were equivalent to `nil`. Defaults to always returning `false`.
 /// - Returns: `true` iff both are equal (both `nil`, or both non-nil with the same value), or if one is `nil` and the
 ///            other is effectively `nil`.
+// TODO: No longer used, but useful - Move to another package
+// #3: https://github.com/RougeWare/Swift-SemVer/issues/3
 func isAscending<T: Comparable>(_ lhs: T?, _ rhs: T?, isLessThanNil: (T) -> Bool = { _ in false }) -> Bool {
     if let lhs = lhs {
         if let rhs = rhs { // lhs != nil, rhs != nil

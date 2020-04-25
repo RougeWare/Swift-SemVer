@@ -257,7 +257,8 @@ extension SemanticVersion: Comparable {
     public static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
         if lhs.major < rhs.major
             || lhs.minor < rhs.minor
-            || isAscending(lhs.patch, rhs.patch, isLessThanNil: { $0 < 0 }) {
+            || lhs.patch < rhs.patch
+        {
             return true
         }
         
