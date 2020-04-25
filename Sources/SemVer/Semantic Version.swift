@@ -78,7 +78,7 @@ public struct SemanticVersion {
     /// internal change that fixes incorrect behavior
     ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-6
-    public var patch: Patch?
+    public var patch: Patch
     
     public var preRelease: PreRelease?
     public var build: Build?
@@ -92,7 +92,7 @@ public struct SemanticVersion {
     ///   - patch:      The PATCH version
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
     ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
-    public init(major: Major, minor: Minor, patch: Patch? = nil, preRelease: PreRelease? = nil, build: Build? = nil) {
+    public init(major: Major, minor: Minor, patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.major = major
         self.minor = minor
         self.patch = patch
@@ -109,7 +109,7 @@ public struct SemanticVersion {
     ///   - patch:      The PATCH version
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
     ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
-    public init(_ major: Major, _ minor: Minor, _ patch: Patch? = nil, preRelease: PreRelease? = nil, build: Build? = nil) {
+    public init(_ major: Major, _ minor: Minor, _ patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.init(major: major, minor: minor, patch: patch, preRelease: preRelease, build: build)
     }
 }
@@ -174,8 +174,8 @@ extension SemanticVersion: CustomStringConvertible {
     /// A regular expression which matches and convenienctly groups all Semantic Version strings
     public static let regex = try! NSRegularExpression(pattern:
         "^(?<major>\\d+)\\." +
-        "(?<minor>\\d+)" +
-        "(?:\\.(?<patch>\\d+))?" +
+        "(?<minor>\\d+)\\." +
+        "(?<patch>\\d+)" +
         "(?:-(?<preRelease>(?:(?<preReleaseId>[0-9A-Za-z-]+)\\.?)+))?" +
         "(?:\\+(?<build>(?:(?<buildId>[0-9A-Za-z-]+)\\.?)+))?$",
                                                        options: .caseInsensitive)
@@ -189,14 +189,15 @@ extension SemanticVersion: CustomStringConvertible {
             guard
                 !matches.isEmpty,
                 let major = matches[0].group("major", in: stringValue).flatMap({ Major($0) }),
-                let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor($0) })
+                let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor($0) }),
+                let patch = matches[0].group("patch", in: stringValue).flatMap({ Patch($0) })
                 else {
                     return nil
             }
             
             self.major = major
             self.minor = minor
-            self.patch = matches[0].group("patch", in: stringValue).flatMap { Patch($0) }
+            self.patch = patch
             
             self.preRelease = matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) }
             self.build = matches[0].group("build", in: stringValue).flatMap { Build($0) }
@@ -205,14 +206,15 @@ extension SemanticVersion: CustomStringConvertible {
             guard
                 !matches.isEmpty,
                 let major = matches[0].group(1, in: stringValue).flatMap({ Major($0) }),
-                let minor = matches[0].group(2, in: stringValue).flatMap({ Minor($0) })
+                let minor = matches[0].group(2, in: stringValue).flatMap({ Minor($0) }),
+                let patch = matches[0].group(3, in: stringValue).flatMap({ Patch($0) })
                 else {
                     return nil
             }
             
             self.major = major
             self.minor = minor
-            self.patch = matches[0].group(3, in: stringValue).flatMap { Patch($0) }
+            self.patch = patch
             
             self.preRelease = matches[0].group(4, in: stringValue).flatMap { PreRelease($0) }
             self.build = matches[0].group(6, in: stringValue).flatMap { Build($0) }
@@ -222,8 +224,7 @@ extension SemanticVersion: CustomStringConvertible {
     
     /// The standard String form of a semantic version
     public var description: String {
-        return concat("\(major).\(minor)",
-            (patch.map { ".\($0)" } ?? ""),
+        return concat("\(major).\(minor).\(patch)",
             (preRelease.map { $0.descriptionWithPrefix } ?? ""),
             (build.map { $0.descriptionWithPrefix } ?? "")
         )
@@ -237,10 +238,7 @@ extension SemanticVersion: Comparable {
     /// All of the fields of this `SemanticVersion` that should be used for comparison,
     /// in order so that the first one takes the highest precedence
     public var orderedComparableIdentifiers: [Identifier] {
-        var orderedComparableFields: [Identifier] = [major, minor]
-        if let patch = patch {
-            orderedComparableFields.append(patch)
-        }
+        var orderedComparableFields: [Identifier] = [major, minor, patch]
         if let preRelease = preRelease {
             orderedComparableFields.append(preRelease)
         }
