@@ -92,6 +92,10 @@ class SemVerTests: XCTestCase {
         XCTAssertNil(SemVer("1.-2"))
         XCTAssertNil(SemVer("1.2.-3"))
         XCTAssertNil(SemVer("1.2.3.4"))
+        
+        XCTAssertNil(SemVer(1,0,0, preRelease: "01"))
+        XCTAssertNil(SemVer("1.0.0-01"))
+        XCTAssertNil(SemVer("1.0.0-01.02.03"))
     }
     
     
