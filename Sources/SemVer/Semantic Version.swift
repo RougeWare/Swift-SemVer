@@ -399,7 +399,6 @@ public extension SemanticVersion.Extension {
     }
     
     
-    #if swift(>=4)
     /// Creates a new extension by separating the given raw string by any periods in it
     ///
     /// - Parameter rawString: A raw representation of a semantic version string.
@@ -407,7 +406,6 @@ public extension SemanticVersion.Extension {
     init(_ rawString: Substring) {
         self.init(identifiers: rawString.split(separator: ".").map { String($0) })
     }
-    #endif
     
     
     /// Creates a new extension by separating the given raw string by any periods in it
@@ -546,12 +544,6 @@ public extension SemanticVersion.Extension {
 // #3: https://github.com/RougeWare/Swift-SemVer/issues/3
 private extension NSTextCheckingResult {
     
-    #if swift(>=4)
-    typealias StringOrSubstring = Substring
-    #else
-    typealias StringOrSubstring = String
-    #endif
-    
     /// Finds the group located at the given index in this text checking result, within the given string
     ///
     /// - Parameters:
@@ -559,7 +551,7 @@ private extension NSTextCheckingResult {
     ///   - string:     The string to search
     ///
     /// - Returns: The substring at the given group index, or `nil` if there is none
-    func group(_ groupIndex: Int, in string: String) -> StringOrSubstring? {
+    func group(_ groupIndex: Int, in string: String) -> Substring? {
         guard let range = self.range(at: groupIndex).orNil else {
             return nil
         }
@@ -574,7 +566,7 @@ private extension NSTextCheckingResult {
     ///
     /// - Returns: The substring at the given group index, or `nil` if there is none
     @available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *)
-    func group(_ groupName: String, in string: String) -> StringOrSubstring? {
+    func group(_ groupName: String, in string: String) -> Substring? {
         guard let range = self.range(withName: groupName).orNil else {
             return nil
         }
@@ -590,7 +582,7 @@ private extension NSTextCheckingResult {
     ///   - string: The string to search
     ///
     /// - Returns: The substring at the given range, or `nil` if there is none
-    private func _group(range: NSRange, in string: String) -> StringOrSubstring? {
+    private func _group(range: NSRange, in string: String) -> Substring? {
         guard range.location != NSNotFound else {
             return nil
         }

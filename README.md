@@ -45,3 +45,17 @@ nil == SemVer("1.2.3.4")
 
 # License #
 This is licensed under [BH-1-PS](https://github.com/BlueHuskyStudios/Licenses/blob/master/Licenses/BH-1-PS.txt).
+
+
+
+# Requirements #
+
+This package requires:
+- Swift 5.1 or newer
+- One of:
+    - macOS 10.14.4 or newer
+    - iOS 11 or newer
+    - tvOS 11 or newer
+    - Ubuntu 16.04 or newer
+
+Other version combinations may work, but have not been tested.
