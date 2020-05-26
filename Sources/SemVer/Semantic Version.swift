@@ -212,7 +212,7 @@ extension SemanticVersion: LosslessStringConvertible {
     /// to SemVer 2.0.0, this will succeed. If it does not, this will return `nil`.
     public init?(_ stringValue: String) {
         let matches = SemVer.regex.matches(in: stringValue, options: [], range: NSRange(location: 0, length: stringValue.count))
-        if #available(OSX 10.13, *) {
+        if #available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *) {
             guard
                 !matches.isEmpty,
                 let major = matches[0].group("major", in: stringValue).flatMap({ Major($0) }),
