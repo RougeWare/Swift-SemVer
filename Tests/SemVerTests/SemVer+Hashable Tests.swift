@@ -13,61 +13,61 @@ import XCTest
 
 class SemVerHashableTests: XCTestCase {
     func testHashable() {
-        let v0_0_0 =       SemVer(0,0,0)
-        let v0_0_0__0 =    SemVer(0,0,0, preRelease: 0)
-        let v0_0_0__0__0 = SemVer(0,0,0, preRelease: 0, build: 0)
-        let v0_0_0__0__1 = SemVer(0,0,0, preRelease: 0, build: 1)
-        let v0_0_0__1__0 = SemVer(0,0,0, preRelease: 1, build: 0)
-        let v0_0_0__1__1 = SemVer(0,0,0, preRelease: 1, build: 1)
+        let v0_0_0 =       SemVer(0,0,0)!
+        let v0_0_0__0 =    SemVer(0,0,0, preRelease: 0)!
+        let v0_0_0__0__0 = SemVer(0,0,0, preRelease: 0, build: 0)!
+        let v0_0_0__0__1 = SemVer(0,0,0, preRelease: 0, build: 1)!
+        let v0_0_0__1__0 = SemVer(0,0,0, preRelease: 1, build: 0)!
+        let v0_0_0__1__1 = SemVer(0,0,0, preRelease: 1, build: 1)!
         
-        let v0_0_1 =       SemVer(0,0,1)
-        let v0_0_1__0 =    SemVer(0,0,1, preRelease: 0)
-        let v0_0_1__0__0 = SemVer(0,0,1, preRelease: 0, build: 0)
-        let v0_0_1__0__1 = SemVer(0,0,1, preRelease: 0, build: 1)
-        let v0_0_1__1__0 = SemVer(0,0,1, preRelease: 1, build: 0)
-        let v0_0_1__1__1 = SemVer(0,0,1, preRelease: 1, build: 1)
+        let v0_0_1 =       SemVer(0,0,1)!
+        let v0_0_1__0 =    SemVer(0,0,1, preRelease: 0)!
+        let v0_0_1__0__0 = SemVer(0,0,1, preRelease: 0, build: 0)!
+        let v0_0_1__0__1 = SemVer(0,0,1, preRelease: 0, build: 1)!
+        let v0_0_1__1__0 = SemVer(0,0,1, preRelease: 1, build: 0)!
+        let v0_0_1__1__1 = SemVer(0,0,1, preRelease: 1, build: 1)!
         
-        let v0_1_0 =       SemVer(0,1,0)
-        let v0_1_0__0 =    SemVer(0,1,0, preRelease: 0)
-        let v0_1_0__0__0 = SemVer(0,1,0, preRelease: 0, build: 0)
-        let v0_1_0__0__1 = SemVer(0,1,0, preRelease: 0, build: 1)
-        let v0_1_0__1__0 = SemVer(0,1,0, preRelease: 1, build: 0)
-        let v0_1_0__1__1 = SemVer(0,1,0, preRelease: 1, build: 1)
+        let v0_1_0 =       SemVer(0,1,0)!
+        let v0_1_0__0 =    SemVer(0,1,0, preRelease: 0)!
+        let v0_1_0__0__0 = SemVer(0,1,0, preRelease: 0, build: 0)!
+        let v0_1_0__0__1 = SemVer(0,1,0, preRelease: 0, build: 1)!
+        let v0_1_0__1__0 = SemVer(0,1,0, preRelease: 1, build: 0)!
+        let v0_1_0__1__1 = SemVer(0,1,0, preRelease: 1, build: 1)!
         
-        let v0_1_1 =       SemVer(0,1,1)
-        let v0_1_1__0 =    SemVer(0,1,1, preRelease: 0)
-        let v0_1_1__0__0 = SemVer(0,1,1, preRelease: 0, build: 0)
-        let v0_1_1__0__1 = SemVer(0,1,1, preRelease: 0, build: 1)
-        let v0_1_1__1__0 = SemVer(0,1,1, preRelease: 1, build: 0)
-        let v0_1_1__1__1 = SemVer(0,1,1, preRelease: 1, build: 1)
+        let v0_1_1 =       SemVer(0,1,1)!
+        let v0_1_1__0 =    SemVer(0,1,1, preRelease: 0)!
+        let v0_1_1__0__0 = SemVer(0,1,1, preRelease: 0, build: 0)!
+        let v0_1_1__0__1 = SemVer(0,1,1, preRelease: 0, build: 1)!
+        let v0_1_1__1__0 = SemVer(0,1,1, preRelease: 1, build: 0)!
+        let v0_1_1__1__1 = SemVer(0,1,1, preRelease: 1, build: 1)!
         
-        let v1_0_0 =       SemVer(1,0,0)
-        let v1_0_0__0 =    SemVer(1,0,0, preRelease: 0)
-        let v1_0_0__0__0 = SemVer(1,0,0, preRelease: 0, build: 0)
-        let v1_0_0__0__1 = SemVer(1,0,0, preRelease: 0, build: 1)
-        let v1_0_0__1__0 = SemVer(1,0,0, preRelease: 1, build: 0)
-        let v1_0_0__1__1 = SemVer(1,0,0, preRelease: 1, build: 1)
+        let v1_0_0 =       SemVer(1,0,0)!
+        let v1_0_0__0 =    SemVer(1,0,0, preRelease: 0)!
+        let v1_0_0__0__0 = SemVer(1,0,0, preRelease: 0, build: 0)!
+        let v1_0_0__0__1 = SemVer(1,0,0, preRelease: 0, build: 1)!
+        let v1_0_0__1__0 = SemVer(1,0,0, preRelease: 1, build: 0)!
+        let v1_0_0__1__1 = SemVer(1,0,0, preRelease: 1, build: 1)!
         
-        let v1_0_1 =       SemVer(1,0,1)
-        let v1_0_1__0 =    SemVer(1,0,1, preRelease: 0)
-        let v1_0_1__0__0 = SemVer(1,0,1, preRelease: 0, build: 0)
-        let v1_0_1__0__1 = SemVer(1,0,1, preRelease: 0, build: 1)
-        let v1_0_1__1__0 = SemVer(1,0,1, preRelease: 1, build: 0)
-        let v1_0_1__1__1 = SemVer(1,0,1, preRelease: 1, build: 1)
+        let v1_0_1 =       SemVer(1,0,1)!
+        let v1_0_1__0 =    SemVer(1,0,1, preRelease: 0)!
+        let v1_0_1__0__0 = SemVer(1,0,1, preRelease: 0, build: 0)!
+        let v1_0_1__0__1 = SemVer(1,0,1, preRelease: 0, build: 1)!
+        let v1_0_1__1__0 = SemVer(1,0,1, preRelease: 1, build: 0)!
+        let v1_0_1__1__1 = SemVer(1,0,1, preRelease: 1, build: 1)!
         
-        let v2_0_0 =       SemVer(2,0,0)
-        let v2_0_0__0 =    SemVer(2,0,0, preRelease: 0)
-        let v2_0_0__0__0 = SemVer(2,0,0, preRelease: 0, build: 0)
-        let v2_0_0__0__1 = SemVer(2,0,0, preRelease: 0, build: 1)
-        let v2_0_0__1__0 = SemVer(2,0,0, preRelease: 1, build: 0)
-        let v2_0_0__1__1 = SemVer(2,0,0, preRelease: 1, build: 1)
+        let v2_0_0 =       SemVer(2,0,0)!
+        let v2_0_0__0 =    SemVer(2,0,0, preRelease: 0)!
+        let v2_0_0__0__0 = SemVer(2,0,0, preRelease: 0, build: 0)!
+        let v2_0_0__0__1 = SemVer(2,0,0, preRelease: 0, build: 1)!
+        let v2_0_0__1__0 = SemVer(2,0,0, preRelease: 1, build: 0)!
+        let v2_0_0__1__1 = SemVer(2,0,0, preRelease: 1, build: 1)!
         
-        let v2_0_1 =       SemVer(2,0,1)
-        let v2_0_1__0 =    SemVer(2,0,1, preRelease: 0)
-        let v2_0_1__0__0 = SemVer(2,0,1, preRelease: 0, build: 0)
-        let v2_0_1__0__1 = SemVer(2,0,1, preRelease: 0, build: 1)
-        let v2_0_1__1__0 = SemVer(2,0,1, preRelease: 1, build: 0)
-        let v2_0_1__1__1 = SemVer(2,0,1, preRelease: 1, build: 1)
+        let v2_0_1 =       SemVer(2,0,1)!
+        let v2_0_1__0 =    SemVer(2,0,1, preRelease: 0)!
+        let v2_0_1__0__0 = SemVer(2,0,1, preRelease: 0, build: 0)!
+        let v2_0_1__0__1 = SemVer(2,0,1, preRelease: 0, build: 1)!
+        let v2_0_1__1__0 = SemVer(2,0,1, preRelease: 1, build: 0)!
+        let v2_0_1__1__1 = SemVer(2,0,1, preRelease: 1, build: 1)!
         
         
         let all: Set<SemVer> = [

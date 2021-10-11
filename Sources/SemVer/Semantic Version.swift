@@ -114,12 +114,14 @@ public struct SemanticVersion {
     ///   - patch:      The PATCH version
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
     ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
-    public init(major: Major, minor: Minor, patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
+    public init?(major: Major, minor: Minor, patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.major = major
         self.minor = minor
         self.patch = patch
         self.preRelease = preRelease
         self.build = build
+        
+        guard isValid else { return nil }
     }
     
     
@@ -131,8 +133,17 @@ public struct SemanticVersion {
     ///   - patch:      The PATCH version
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
     ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
-    public init(_ major: Major, _ minor: Minor, _ patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
+    public init?(_ major: Major, _ minor: Minor, _ patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.init(major: major, minor: minor, patch: patch, preRelease: preRelease, build: build)
+    }
+}
+
+
+
+private extension SemVer {
+    var isValid: Bool {
+        let stringForm = description
+        return Self.regex.numberOfMatches(in: stringForm, options: [], range: NSRange(location: 0, length: stringForm.count)) > 0
     }
 }
 
@@ -198,14 +209,45 @@ public extension SemanticVersion {
 
 extension SemanticVersion: LosslessStringConvertible {
     
+    /// A purely-numeric identifier for the `regex` which matches semantic versions
+    private static let regex_numericIdentifier    = #"(?:0|[1-9]\d*)"#
+    
+    /// A pre-release identifier for the `regex` which matches semantic versions
+    private static let regex_preReleaseIdentifier = #"(?:0|[1-9A-Za-z-][0-9A-Za-z-]*)"#
+    
+    /// A build identifier for the `regex` which matches semantic versions
+    private static let regex_buildIdentifier      =               #"[0-9A-Za-z-]*"#
+    
+    
+    /// Builds a version identifier (major/minor/patch)
+    /// - Parameter name: The name of the identifier, like `patch`
+    @inline(__always)
+    private static func regex_versionIdentifier(_ name: String) -> String {
+        "(?<\(name)>\(regex_numericIdentifier))"
+    }
+    
+    
+    /// Builds a SemVer extension (pre-release / build)
+    /// - Parameters:
+    ///   - delimiter: The delimiter which distinguishes this extension, like `-` or `\+`
+    ///   - name:      The name of this extension, like `preRelease` or `build`
+    ///   - id:        The pattern to insert into the regex for each identifier in this extension
+    @inline(__always)
+    private static func regex_extension(_ delimiter: String, _ name: String, id: String) -> String {
+        #"(?:\#(delimiter)(?<\#(name)>\#(id)(?:\.\#(id))*))?"#
+    }
+    
+    
     /// A regular expression which matches and conveniently groups all Semantic Version strings
-    public static let regex = try! NSRegularExpression(pattern:
-        "^(?<major>\\d+)\\." +
-        "(?<minor>\\d+)\\." +
-        "(?<patch>\\d+)" +
-        "(?:-(?<preRelease>(?:(?<preReleaseId>[0-9A-Za-z-]+)\\.?)+))?" +
-        "(?:\\+(?<build>(?:(?<buildId>[0-9A-Za-z-]+)\\.?)+))?$",
-                                                       options: .caseInsensitive)
+    public static let regex = try! NSRegularExpression(
+        pattern: "^" +
+        regex_versionIdentifier("major") + #"\."# +
+        regex_versionIdentifier("minor") + #"\."# +
+             regex_versionIdentifier("patch") +
+        regex_extension("-", "preRelease", id: regex_preReleaseIdentifier) +
+        regex_extension(#"\+"#, "build", id: regex_buildIdentifier) +
+        "$",
+        options: [])
     
     
     /// If possible, this creates a new `SemanticVersion` out of the given string. As long as the given string conforms

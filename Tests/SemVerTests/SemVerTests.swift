@@ -23,9 +23,9 @@ class SemVerTests: XCTestCase {
     
     
     func testDescription() {
-        XCTAssertEqual(SemVer(01,2,3, preRelease: "RC.4", build: 567).description, "1.2.3-RC.4+567")
-        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: 567).description, "1.2.3-RC.4+567")
-        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: [567]).description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3, preRelease: "RC.4", build: 567)!.description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: 567)!.description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: [567])!.description, "1.2.3-RC.4+567")
         XCTAssertEqual(SemVer("1.2.3-RC.4+567")?.description, "1.2.3-RC.4+567")
     }
     
@@ -57,8 +57,8 @@ class SemVerTests: XCTestCase {
         
         
         // Proof of fix of #7 https://github.com/RougeWare/Swift-SemVer/issues/7
-        XCTAssertTrue(SemVer(10,0,0) < SemVer(11,0,0))
-        XCTAssertTrue(SemVer(11,0,0) > SemVer(10,0,0))
+        XCTAssertTrue(SemVer(10,0,0)! < SemVer(11,0,0)!)
+        XCTAssertTrue(SemVer(11,0,0)! > SemVer(10,0,0)!)
     }
     
     
@@ -93,17 +93,23 @@ class SemVerTests: XCTestCase {
         XCTAssertNil(SemVer("1.2.-3"))
         XCTAssertNil(SemVer("1.2.3.4"))
         
-        // https://github.com/RougeWare/Swift-SemVer/issues/14
+        // Proof of fix of #14: https://github.com/RougeWare/Swift-SemVer/issues/14
         XCTAssertNil(SemVer(1,0,0, preRelease: "01"))
         XCTAssertNil(SemVer("1.0.0-01"))
         XCTAssertNil(SemVer("1.0.0-01.02.03"))
+        
+        XCTAssertNil(SemVer("01.2.3"))
+        XCTAssertNil(SemVer("1.02.3"))
+        XCTAssertNil(SemVer("1.2.03"))
     }
     
     
-    func testBasicFixes() {
-        XCTAssertEqual(SemVer(1,2,3), SemVer("01.2.3"))
-        XCTAssertEqual(SemVer(1,2,3), SemVer("1.02.3"))
-        XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.03"))
+    func testAdvancedEquality() {
+        XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.3"))
+        XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.3+12"))
+        XCTAssertEqual(SemVer(1,2,3, build: 12), SemVer("1.2.3"))
+        XCTAssertEqual(SemVer(1,2,3, build: 12), SemVer(1,2,3))
+        XCTAssertEqual(SemVer(1,2,3, build: 12), SemVer("1.2.3+12"))
     }
     
 
@@ -113,6 +119,6 @@ class SemVerTests: XCTestCase {
         ("testPrecedence", testPrecedence),
         ("testEquivalence", testEquivalence),
         ("testInvalid", testInvalid),
-        ("testBasicFixes", testBasicFixes),
+        ("testAdvancedEquality", testAdvancedEquality),
     ]
 }
