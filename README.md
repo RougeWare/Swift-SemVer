@@ -54,6 +54,9 @@ This package requires:
 - Swift 5.1 or newer
 - One of:
     - macOS 10.14.4 or newer
+    - iOS 11 or newer
+    - tvOS 11 or newer
+    - watchOS 4 or newer
     - Ubuntu 16.04 or newer
 
 Other version & platform combinations may work, but have not been tested.
