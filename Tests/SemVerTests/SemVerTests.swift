@@ -23,9 +23,9 @@ class SemVerTests: XCTestCase {
     
     
     func testDescription() {
-        XCTAssertEqual(SemVer(01,2,3, preRelease: "RC.4", build: 567).description, "1.2.3-RC.4+567")
-        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: 567).description, "1.2.3-RC.4+567")
-        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: [567]).description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3, preRelease: "RC.4", build: 567)!.description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: 567)!.description, "1.2.3-RC.4+567")
+        XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: [567])!.description, "1.2.3-RC.4+567")
         XCTAssertEqual(SemVer("1.2.3-RC.4+567")?.description, "1.2.3-RC.4+567")
     }
     
@@ -40,7 +40,21 @@ class SemVerTests: XCTestCase {
     }
     
     
+    func testBuildNumber() {
+        XCTAssertEqual(SemVer("1.2.3+123")!.description, "1.2.3+123")
+        XCTAssertEqual(SemVer("1.2.3+exp.sha.5114f85")!.description, "1.2.3+exp.sha.5114f85")
+        XCTAssertEqual(SemVer("1.2.3+2018.01.14.00.01")!.description, "1.2.3+2018.01.14.00.01")
+    }
+    
+    
     func testPrecedence() {
+        XCTAssertLessThan(SemVer("0.0.1")!, SemVer("0.1.0")!)
+        XCTAssertLessThan(SemVer("0.0.99999")!, SemVer("0.1.0")!)
+        XCTAssertLessThan(SemVer("0.0.1")!, SemVer("1.0.0")!)
+        XCTAssertLessThan(SemVer("0.1.0")!, SemVer("1.0.0")!)
+        XCTAssertLessThan(SemVer("0.0.1")!, SemVer("1.1.0")!)
+        XCTAssertLessThan(SemVer("0.1.0")!, SemVer("1.1.0")!)
+        XCTAssertLessThan(SemVer("0.1.1")!, SemVer("1.1.0")!)
         XCTAssertLessThan(SemVer("1.0.0")!, SemVer("2.0.0")!)
         XCTAssertLessThan(SemVer("2.0.0")!, SemVer("2.1.0")!)
         XCTAssertLessThan(SemVer("2.1.0")!, SemVer("2.1.1")!)
@@ -55,10 +69,33 @@ class SemVerTests: XCTestCase {
         XCTAssertLessThan(SemVer("1.0.0-beta.11")!, SemVer("1.0.0-rc.1")!)
         XCTAssertLessThan(SemVer("1.0.0-rc.1")!, SemVer("1.0.0")!)
         
+        // Now reverse it:
+        
+        XCTAssertGreaterThan(SemVer("0.1.0")!, SemVer("0.0.1")!)
+        XCTAssertGreaterThan(SemVer("0.1.0")!, SemVer("0.0.99999")!)
+        XCTAssertGreaterThan(SemVer("1.0.0")!, SemVer("0.0.1")!)
+        XCTAssertGreaterThan(SemVer("1.0.0")!, SemVer("0.1.0")!)
+        XCTAssertGreaterThan(SemVer("1.1.0")!, SemVer("0.0.1")!)
+        XCTAssertGreaterThan(SemVer("1.1.0")!, SemVer("0.1.0")!)
+        XCTAssertGreaterThan(SemVer("1.1.0")!, SemVer("0.1.1")!)
+        XCTAssertGreaterThan(SemVer("2.0.0")!, SemVer("1.0.0")!)
+        XCTAssertGreaterThan(SemVer("2.1.0")!, SemVer("2.0.0")!)
+        XCTAssertGreaterThan(SemVer("2.1.1")!, SemVer("2.1.0")!)
+        XCTAssertGreaterThan(SemVer("12.0.0")!, SemVer("2.0.0")!)
+        
+        XCTAssertGreaterThan(SemVer("1.0.0")!, SemVer("1.0.0-alpha")!)
+        XCTAssertGreaterThan(SemVer("1.0.0-alpha.1")!, SemVer("1.0.0-alpha")!)
+        XCTAssertGreaterThan(SemVer("1.0.0-alpha.beta")!, SemVer("1.0.0-alpha.1")!)
+        XCTAssertGreaterThan(SemVer("1.0.0-beta")!, SemVer("1.0.0-alpha.1")!)
+        XCTAssertGreaterThan(SemVer("1.0.0-beta.2")!, SemVer("1.0.0-beta")!)
+        XCTAssertGreaterThan(SemVer("1.0.0-beta.11")!, SemVer("1.0.0-beta.2")!)
+        XCTAssertGreaterThan(SemVer("1.0.0-rc.1")!, SemVer("1.0.0-beta.11")!)
+        XCTAssertGreaterThan(SemVer("1.0.0")!, SemVer("1.0.0-rc.1")!)
+        
         
         // Proof of fix of #7 https://github.com/RougeWare/Swift-SemVer/issues/7
-        XCTAssertTrue(SemVer(10,0,0) < SemVer(11,0,0))
-        XCTAssertTrue(SemVer(11,0,0) > SemVer(10,0,0))
+        XCTAssertTrue(SemVer(10,0,0)! < SemVer(11,0,0)!)
+        XCTAssertTrue(SemVer(11,0,0)! > SemVer(10,0,0)!)
     }
     
     
@@ -93,17 +130,23 @@ class SemVerTests: XCTestCase {
         XCTAssertNil(SemVer("1.2.-3"))
         XCTAssertNil(SemVer("1.2.3.4"))
         
-        // https://github.com/RougeWare/Swift-SemVer/issues/14
+        // Proof of fix of #14: https://github.com/RougeWare/Swift-SemVer/issues/14
         XCTAssertNil(SemVer(1,0,0, preRelease: "01"))
         XCTAssertNil(SemVer("1.0.0-01"))
         XCTAssertNil(SemVer("1.0.0-01.02.03"))
+        
+        XCTAssertNil(SemVer("01.2.3"))
+        XCTAssertNil(SemVer("1.02.3"))
+        XCTAssertNil(SemVer("1.2.03"))
     }
     
     
-    func testBasicFixes() {
-        XCTAssertEqual(SemVer(1,2,3), SemVer("01.2.3"))
-        XCTAssertEqual(SemVer(1,2,3), SemVer("1.02.3"))
-        XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.03"))
+    func testAdvancedEquality() {
+        XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.3"))
+        XCTAssertEqual(SemVer(1,2,3), SemVer("1.2.3+12"))
+        XCTAssertEqual(SemVer(1,2,3, build: 12), SemVer("1.2.3"))
+        XCTAssertEqual(SemVer(1,2,3, build: 12), SemVer(1,2,3))
+        XCTAssertEqual(SemVer(1,2,3, build: 12), SemVer("1.2.3+12"))
     }
     
 
@@ -113,6 +156,6 @@ class SemVerTests: XCTestCase {
         ("testPrecedence", testPrecedence),
         ("testEquivalence", testEquivalence),
         ("testInvalid", testInvalid),
-        ("testBasicFixes", testBasicFixes),
+        ("testAdvancedEquality", testAdvancedEquality),
     ]
 }
