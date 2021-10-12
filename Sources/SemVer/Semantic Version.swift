@@ -332,8 +332,8 @@ extension SemanticVersion: Comparable {
     /// - Returns: `true` iff the left has lower precedence than the right
     public static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
         if lhs.major < rhs.major
-            || lhs.minor < rhs.minor
-            || lhs.patch < rhs.patch
+            || (lhs.major == rhs.major && lhs.minor < rhs.minor)
+            || (lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch < rhs.patch)
         {
             return true
         }
