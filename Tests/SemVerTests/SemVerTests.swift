@@ -40,6 +40,13 @@ class SemVerTests: XCTestCase {
     }
     
     
+    func testBuildNumber() {
+        XCTAssertEqual(SemVer("1.2.3+123")!.description, "1.2.3+123")
+        XCTAssertEqual(SemVer("1.2.3+exp.sha.5114f85")!.description, "1.2.3+exp.sha.5114f85")
+        XCTAssertEqual(SemVer("1.2.3+2018.01.14.00.01")!.description, "1.2.3+2018.01.14.00.01")
+    }
+    
+    
     func testPrecedence() {
         XCTAssertLessThan(SemVer("0.0.1")!, SemVer("0.1.0")!)
         XCTAssertLessThan(SemVer("0.0.99999")!, SemVer("0.1.0")!)

@@ -106,7 +106,7 @@ public struct SemanticVersion {
     public var build: Build?
     
     
-    /// Create a new Semantic Version with explicit parts
+    /// Create a new Semantic Version with explicit parts. This returns `nil` if the given parts would create an invalid regex, like `1.02.3`
     ///
     /// - Parameters:
     ///   - major:      The MAJOR version
@@ -125,7 +125,7 @@ public struct SemanticVersion {
     }
     
     
-    /// Create a new Semantic Version with explicit (yet unlabelled) parts
+    /// Create a new Semantic Version with explicit (yet unlabelled) parts. This returns `nil` if the given parts would create an invalid regex, like `1.02.3`
     ///
     /// - Parameters:
     ///   - major:      The MAJOR version
@@ -141,6 +141,10 @@ public struct SemanticVersion {
 
 
 private extension SemVer {
+    
+    /// Determines whether this semantic version is valid
+    ///
+    /// - Note: This must remain `private`, since the whole point of this package is that it facilitates valid semantic versions
     var isValid: Bool {
         let stringForm = description
         return Self.regex.numberOfMatches(in: stringForm, options: [], range: NSRange(location: 0, length: stringForm.count)) > 0
@@ -216,7 +220,7 @@ extension SemanticVersion: LosslessStringConvertible {
     private static let regex_preReleaseIdentifier = #"(?:0|[1-9A-Za-z-][0-9A-Za-z-]*)"#
     
     /// A build identifier for the `regex` which matches semantic versions
-    private static let regex_buildIdentifier      =               #"[0-9A-Za-z-]*"#
+    private static let regex_buildIdentifier      =                  #"[0-9A-Za-z-]*"#
     
     
     /// Builds a version identifier (major/minor/patch)
