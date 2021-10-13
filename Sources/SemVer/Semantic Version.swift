@@ -3,7 +3,7 @@
 //  SemVer
 //
 //  Created by Ben Leggiero on 2018-01-09.
-//  Copyright © 2020 Ben Leggiero BH-1-PS.
+//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import Foundation
@@ -70,7 +70,7 @@ public struct SemanticVersion {
                 assertionFailure(
                     """
                     Major version number was decremented (went from \(_major) to \(newValue))!
-                    In production builds, this will result in the Major version number being reset to its previous value.
+                    In production builds, this will result in the Major version number not changing.
                     """)
             }
             else {
@@ -106,7 +106,7 @@ public struct SemanticVersion {
                 assertionFailure(
                     """
                     Minor version number was decremented (went from \(_minor) to \(newValue))!
-                    In production builds, this will result in the Minor version number being reset to its previous value.
+                    In production builds, this will result in the Minor version number not changing.
                     """)
             }
             else {
@@ -135,7 +135,7 @@ public struct SemanticVersion {
                 assertionFailure(
                     """
                     Patch version number was decremented (went from \(_patch) to \(newValue))!
-                    In production builds, this will result in the Patch version number being reset to its previous value.
+                    In production builds, this will result in the Patch version number not changing.
                     """)
             }
             else {
