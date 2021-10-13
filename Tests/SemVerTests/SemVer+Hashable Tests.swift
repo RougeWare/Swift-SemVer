@@ -12,6 +12,12 @@ import XCTest
 
 
 class SemVerHashableTests: XCTestCase {
+    
+    override func setUp() {
+        isTesting = true
+    }
+    
+    
     func testHashable() {
         let v0_0_0 =       SemVer(0,0,0)!
         let v0_0_0__0 =    SemVer(0,0,0, preRelease: 0)!
@@ -131,6 +137,11 @@ class SemVerHashableTests: XCTestCase {
         
         XCTAssertTrue(all.allPairsSatisfy { $0.hashValue != $1.hashValue })
     }
+    
+    
+    static let allTests = [
+        ("testHashable", testHashable),
+    ]
 }
 
 

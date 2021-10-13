@@ -41,6 +41,15 @@ public struct SemanticVersion {
     public typealias Build = Extension.Build
     
     
+    /// Holds the raw, unmanaged value for `major`
+    private var _major: Major
+    
+    /// Holds the raw, unmanaged value for `minor`
+    private var _minor: Minor
+    
+    /// Holds the raw, unmanaged value for `patch`
+    private var _patch: Patch
+    
     
     /// The MAJOR version; increment this when you make incompatible API changes.
     ///
@@ -49,15 +58,32 @@ public struct SemanticVersion {
     /// Patch and minor version MUST be reset to `0` when major version is incremented. This is done automatically if
     /// you set this variable.
     ///
+    /// This MUST increase numerically. For instance: 1.9.0 ➡️ 2.0.0 ➡️ 3.0.0.
+    ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-8
     ///
-    /// - Attention: Changing this immediately sets `minor` and `patch` to `0`.
+    /// - Attention: Increasing this immediately sets `minor` and `patch` to `0`.
     /// - Note: If this is `0`, then further rules don't apply.
     public var major: Major {
-        willSet {
-            minor = 0
-            patch = 0
+        set {
+            if newValue < _major {
+                assertionFailure(
+                    """
+                    Major version number was decremented (went from \(_major) to \(newValue))!
+                    In production builds, this will result in the Major version number being reset to its previous value.
+                    """)
+            }
+            else {
+                if newValue > _major {
+                    _minor = 0
+                    _patch = 0
+                }
+                
+                _major = newValue
+            }
         }
+        
+        get { _major }
     }
     
     /// The MINOR version; increment this when you add functionality in a backwards-compatible manner.
@@ -69,13 +95,30 @@ public struct SemanticVersion {
     /// Patch version MUST be reset to `0` when minor version is incremented. This is done automatically if you set
     /// this variable.
     ///
+    /// This MUST increase numerically. For instance: 1.9.0 ➡️ 1.10.0 ➡️ 1.11.0.
+    ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-7
     ///
-    /// - Attention: Changing this immediately sets `minor` and `patch` to `0`.
+    /// - Attention: Increasing this immediately sets `patch` to `0`.
     public var minor: Minor {
-        willSet {
-            patch = 0
+        set {
+            if newValue < _minor {
+                assertionFailure(
+                    """
+                    Minor version number was decremented (went from \(_minor) to \(newValue))!
+                    In production builds, this will result in the Minor version number being reset to its previous value.
+                    """)
+            }
+            else {
+                if newValue > _minor {
+                    _patch = 0
+                }
+                
+                _minor = newValue
+            }
         }
+        
+        get { _minor }
     }
     
     /// The PATCH version; increment this when you make backwards compatible bug fixes.
@@ -83,8 +126,25 @@ public struct SemanticVersion {
     /// This MUST be incremented if only backwards compatible bug fixes are introduced. A bug fix is defined as an
     /// internal change that fixes incorrect behavior
     ///
+    /// This MUST increase numerically. For instance: 1.0.9.➡️ 1.0.10 ➡️ 1.0.11.
+    ///
     /// https://semver.org/spec/v2.0.0.html#spec-item-6
-    public var patch: Patch
+    public var patch: Patch {
+        set {
+            if newValue < _patch {
+                assertionFailure(
+                    """
+                    Patch version number was decremented (went from \(_patch) to \(newValue))!
+                    In production builds, this will result in the Patch version number being reset to its previous value.
+                    """)
+            }
+            else {
+                _patch = newValue
+            }
+        }
+        
+        get { _patch }
+    }
     
     /// The PRE-RELEASE extension; this identifies versions that are available before being declared stable.
     ///
@@ -94,7 +154,19 @@ public struct SemanticVersion {
     /// Pre-release versions have a lower precedence than the associated normal version.
     /// A pre-release version indicates that the version is unstable and might not satisfy the intended compatibility
     /// requirements as denoted by its associated normal version.
-    public var preRelease: PreRelease?
+    public var preRelease: PreRelease? {
+        didSet {
+            if !isValid {
+                assertionFailure(
+                    """
+                    Pre-Release extension set to an invalid value (\(preRelease ?? "nil"))!
+                    In production builds, this will result in the Pre-Release extension being reset to its previous value.
+                    """)
+                
+                preRelease = oldValue
+            }
+        }
+    }
     
     /// The BUILD metadata; this identifies some information about a particular build of a version, and is not
     /// considered for equivalence nor precedence.
@@ -103,7 +175,30 @@ public struct SemanticVersion {
     /// Identifiers MUST NOT be empty.
     /// Build metadata MUST be ignored when determining version precedence.
     /// Thus two versions that differ only in the build metadata, have the same precedence.
-    public var build: Build?
+    public var build: Build? {
+        didSet {
+            if !isValid {
+                assertionFailure(
+                    """
+                    Build extension set to an invalid value (\(build ?? "nil"))!
+                    In production builds, this will result in the Build extension being reset to its previous value.
+                    """)
+                
+                build = oldValue
+            }
+        }
+    }
+    
+    
+    /// Create a new Semantic Version without checking the validity of any of the pieces
+    /// - Parameter unchecked: All the semantic version values, without checking their validity
+    private init(unchecked: (major: Major, minor: Minor, patch: Patch, preRelease: PreRelease?, build: Build?)) {
+        self._major = unchecked.major
+        self._minor = unchecked.minor
+        self._patch = unchecked.patch
+        self.preRelease = unchecked.preRelease
+        self.build = unchecked.build
+    }
     
     
     /// Create a new Semantic Version with explicit parts. This returns `nil` if the given parts would create an invalid regex, like `1.02.3`
@@ -115,17 +210,17 @@ public struct SemanticVersion {
     ///   - preRelease: Indicates some specific information about a pre-release build, like `RC.1`
     ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
     public init?(major: Major, minor: Minor, patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
-        self.major = major
-        self.minor = minor
-        self.patch = patch
-        self.preRelease = preRelease
-        self.build = build
+        self.init(unchecked: (major: major,
+                              minor: minor,
+                              patch: patch,
+                              preRelease: preRelease,
+                              build: build))
         
         guard isValid else { return nil }
     }
     
     
-    /// Create a new Semantic Version with explicit (yet unlabelled) parts. This returns `nil` if the given parts would create an invalid regex, like `1.02.3`
+    /// Create a new Semantic Version with explicit (yet unlabelled) parts. This returns `nil` if the given parts would create an invalid SemVer, like `1.02.3`
     ///
     /// - Parameters:
     ///   - major:      The MAJOR version
@@ -135,6 +230,40 @@ public struct SemanticVersion {
     ///   - build:      The build number, like `123` or `exp.sha.5114f85` or `2018.01.14.00.01`
     public init?(_ major: Major, _ minor: Minor, _ patch: Patch, preRelease: PreRelease? = nil, build: Build? = nil) {
         self.init(major: major, minor: minor, patch: patch, preRelease: preRelease, build: build)
+    }
+    
+    
+    /// Create a new simple Semantic Version with explicit parts and no extensions.
+    ///
+    /// This always succeeds, unlike the more-freeform initializers, since it's guaranteed to be correct at compile-time. If you need to set the Pre-Release andor Build extension, you must use one of the failable initializers.
+    ///
+    /// - Parameters:
+    ///   - major:      The MAJOR version
+    ///   - minor:      The MINOR version
+    ///   - patch:      The PATCH version
+    public init(major: UInt, minor: UInt, patch: UInt) {
+        self.init(unchecked: (major: major,
+                              minor: minor,
+                              patch: patch,
+                              preRelease: nil,
+                              build: nil))
+    }
+    
+    
+    /// Create a new simple Semantic Version with explicit (yet unlabelled) parts and no extensions.
+    ///
+    /// This always succeeds, unlike the more-freeform initializers, since it's guaranteed to be correct at compile-time. If you need to set the Pre-Release andor Build extension, you must use one of the failable initializers.
+    ///
+    /// - Parameters:
+    ///   - major:      The MAJOR version
+    ///   - minor:      The MINOR version
+    ///   - patch:      The PATCH version
+    public init(_ major: UInt, _ minor: UInt, _ patch: UInt) {
+        self.init(unchecked: (major: major,
+                              minor: minor,
+                              patch: patch,
+                              preRelease: nil,
+                              build: nil))
     }
 }
 
@@ -269,12 +398,14 @@ extension SemanticVersion: LosslessStringConvertible {
                 return nil
             }
             
-            self.major = major
-            self.minor = minor
-            self.patch = patch
-            
-            self.preRelease = matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) }
-            self.build = matches[0].group("build", in: stringValue).flatMap { Build($0) }
+            self.init(unchecked: (
+                major: major,
+                minor: minor,
+                patch: patch,
+                
+                preRelease: matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) },
+                build: matches[0].group("build", in: stringValue).flatMap { Build($0) })
+            )
         }
         else { // FIXME: Remove ASAP
             guard
@@ -287,12 +418,14 @@ extension SemanticVersion: LosslessStringConvertible {
                 return nil
             }
             
-            self.major = major
-            self.minor = minor
-            self.patch = patch
-            
-            self.preRelease = matches[0].group(4, in: stringValue).flatMap { PreRelease($0) }
-            self.build = matches[0].group(6, in: stringValue).flatMap { Build($0) }
+            self.init(unchecked: (
+                major: major,
+                minor: minor,
+                patch: patch,
+                
+                preRelease: matches[0].group(4, in: stringValue).flatMap { PreRelease($0) },
+                build: matches[0].group(6, in: stringValue).flatMap { Build($0) })
+            )
         }
     }
     
