@@ -2,6 +2,8 @@ import XCTest
 
 import SemVerTests
 
-var tests = [XCTestCaseEntry]()
-tests += SemVerTests.allTests()
-XCTMain(tests)
+isTesting = true
+    
+XCTMain(SemVerTests.allTests
+        + SemVerHashableTests.allTests
+        + SemVerMutationTests.allTests)
