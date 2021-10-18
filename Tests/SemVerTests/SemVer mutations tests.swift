@@ -7,15 +7,11 @@
 //
 
 import XCTest
-@testable import SemVer
+import SemVer
 
 
 
-class SemVerMutationTests: XCTestCase {
-    
-    override func setUp() {
-        isTesting = true
-    }
+class SemVerMutationTests: SemVerTestClass {
     
     
     // MARK: - Increment
