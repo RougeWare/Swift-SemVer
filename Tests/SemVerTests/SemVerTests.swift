@@ -7,15 +7,11 @@
 //
 
 import XCTest
-@testable import SemVer
+import SemVer
 
 
 
-class SemVerTests: XCTestCase {
-    
-    override func setUp() {
-        isTesting = true
-    }
+class SemVerTests: SemVerTestClass {
     
     
     func testDescription() {
