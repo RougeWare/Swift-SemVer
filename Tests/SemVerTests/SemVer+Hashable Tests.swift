@@ -1,6 +1,6 @@
 //
 //  SemVer+Hashable Tests.swift
-//  SemVer
+//  SemVerTests
 //
 //  Created by Ben Leggiero on 2020-04-19.
 //  Copyright © 2021 Ben Leggiero BH-1-PS.
