@@ -6,4 +6,5 @@ isTesting = true
     
 XCTMain(SemVerTests.allTests
         + SemVerHashableTests.allTests
-        + SemVerMutationTests.allTests)
+        + SemVerMutationTests.allTests
+        + SemVerComparableTests.allTests)

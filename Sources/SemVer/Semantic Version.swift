@@ -45,10 +45,10 @@ public struct SemanticVersion {
     private var _major: Major
     
     /// Holds the raw, unmanaged value for `minor`
-    private var _minor: Minor
+    internal var _minor: Minor
     
     /// Holds the raw, unmanaged value for `patch`
-    private var _patch: Patch
+    internal var _patch: Patch
     
     
     /// The MAJOR version; increment this when you make incompatible API changes.
@@ -436,71 +436,6 @@ extension SemanticVersion: LosslessStringConvertible {
             (preRelease.map { $0.descriptionWithPrefix } ?? ""),
             (build.map { $0.descriptionWithPrefix } ?? "")
         )
-    }
-}
-
-
-
-extension SemanticVersion: Comparable {
-    
-    /// All of the fields of this `SemanticVersion` that should be used for comparison,
-    /// in order so that the first one takes the highest precedence
-    public var orderedComparableIdentifiers: [Identifier] {
-        var orderedComparableFields: [Identifier] = [major, minor, patch]
-        if let preRelease = preRelease {
-            orderedComparableFields.append(preRelease)
-        }
-        return orderedComparableFields
-    }
-    
-    
-    /// Implements Semantic Version precedence
-    ///
-    /// https://semver.org/spec/v2.0.0.html#spec-item-11
-    ///
-    /// - Parameters:
-    ///   - lhs: The first semantic version to compare
-    ///   - rhs: The second semantic version to compare
-    ///
-    /// - Returns: `true` iff the left has lower precedence than the right
-    public static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-        if lhs.major < rhs.major
-            || (lhs.major == rhs.major && lhs.minor < rhs.minor)
-            || (lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch < rhs.patch)
-        {
-            return true
-        }
-        
-        if let lhsPreRelease = lhs.preRelease {
-            if let rhsPreRelease = rhs.preRelease {
-                return lhsPreRelease < rhsPreRelease
-            }
-            else {
-                return true
-            }
-        }
-        else {
-            return false
-        }
-    }
-    
-    
-    /// Determines whether the given two semantic versions are equivalent. Equivalence is implied by the precedence
-    /// rules laid out in SemVer 2.0.0 paragraph 11: https://semver.org/spec/v2.0.0.html#spec-item-11
-    ///
-    /// Remember that build metadata does not factor into equality. For example, `"1.2.3+45" == "1.2.3+67"`.
-    ///
-    /// - Parameters:
-    ///   - lhs: The first version to compare
-    ///   - rhs: The second version to compare
-    ///
-    /// - Returns: `true` if the two versions are equivalent
-    public static func ==(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-        return lhs.major == rhs.major
-            && lhs.minor == rhs.minor
-            && lhs.patch == rhs.patch
-            && isEquivalent(lhs.preRelease, rhs.preRelease, isEquivalentToNil: { $0 == "" })
-        // According to https://semver.org/spec/v2.0.0.html#spec-item-11, "Build metadata does not figure into precedence"
     }
 }
 
