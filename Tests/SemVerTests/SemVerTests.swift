@@ -51,11 +51,14 @@ class SemVerTests: SemVerTestClass {
         XCTAssertNil(SemVer("1.2-RC.4+567"))
         XCTAssertNil(SemVer("1.2-RC+567.8"))
         XCTAssertNil(SemVer("-2.0"))
+        XCTAssertNil(SemVer("-2.0.0"))
         XCTAssertNil(SemVer("2.0-β"))
         XCTAssertNil(SemVer("2.0-beta_1"))
         XCTAssertNil(SemVer("1.-2"))
         XCTAssertNil(SemVer("1.2.-3"))
         XCTAssertNil(SemVer("1.2.3.4"))
+        XCTAssertNil(SemVer("1.2.3-😱"))
+        XCTAssertNil(SemVer("1.2.3-semántice"))
         
         // Proof of fix of #14: https://github.com/RougeWare/Swift-SemVer/issues/14
         XCTAssertNil(SemVer(1,0,0, preRelease: "01"))

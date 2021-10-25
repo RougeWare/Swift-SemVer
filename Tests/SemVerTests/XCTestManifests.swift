@@ -8,6 +8,7 @@ public func allTests() -> [XCTestCaseEntry] {
         testCase(SemVerTests.allTests),
         testCase(SemVerHashableTests.allTests),
         testCase(SemVerMutationTests.allTests),
+        testCase(SemVerCodableTests.allTests),
         testCase(SemVerComparableTests.allTests),
     ]
 }

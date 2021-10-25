@@ -1,6 +1,6 @@
 //
 //  SemVer+Codable Tests.swift
-//  
+//  SemVerTests
 //
 //  Created by Ky Leggiero on 2021-10-18.
 //
@@ -89,6 +89,14 @@ class SemVerCodableTests: SemVerTestClass {
         XCTAssertEqual(SemVer(01,2,3, preRelease: ["RC","4"], build: [567])!, try encodeDecode(SemVer(01,2,3, preRelease: ["RC","4"], build: [567])!))
         XCTAssertEqual(SemVer("1.2.3-RC.4+567")!,                             try encodeDecode(SemVer("1.2.3-RC.4+567")!))
     }
+    
+    
+    
+    static let allTests = [
+        ("testEncode", testEncode),
+        ("testDecode", testDecode),
+        ("testEncodeDecode", testEncodeDecode),
+    ]
 }
 
 
