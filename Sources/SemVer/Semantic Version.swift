@@ -33,9 +33,9 @@ public typealias SemVer = SemanticVersion
 public struct SemanticVersion {
     
     public typealias Identifier = SemanticVersionIdentifier
-    public typealias Major = UInt
-    public typealias Minor = UInt
-    public typealias Patch = UInt
+    public typealias Major = Identifier<OnlyDigits>
+    public typealias Minor = Identifier<OnlyDigits>
+    public typealias Patch = Identifier<OnlyDigits>
     public typealias Extension = SemanticVersionExtension
     public typealias PreRelease = Extension.PreRelease
     public typealias Build = Extension.Build
@@ -242,9 +242,9 @@ public struct SemanticVersion {
     ///   - minor:      The MINOR version
     ///   - patch:      The PATCH version
     public init(major: UInt, minor: UInt, patch: UInt) {
-        self.init(unchecked: (major: major,
-                              minor: minor,
-                              patch: patch,
+        self.init(unchecked: (major: .integer(major),
+                              minor: .integer(minor),
+                              patch: .integer(patch),
                               preRelease: nil,
                               build: nil))
     }
@@ -259,9 +259,9 @@ public struct SemanticVersion {
     ///   - minor:      The MINOR version
     ///   - patch:      The PATCH version
     public init(_ major: UInt, _ minor: UInt, _ patch: UInt) {
-        self.init(unchecked: (major: major,
-                              minor: minor,
-                              patch: patch,
+        self.init(unchecked: (major: .integer(major),
+                              minor: .integer(minor),
+                              patch: .integer(patch),
                               preRelease: nil,
                               build: nil))
     }
@@ -282,18 +282,13 @@ private extension SemVer {
 
 
 
-/// A single piece of a semantic version, like `minor` or `build`
-public protocol SemanticVersionIdentifier {}
+// MARK: - SemVer identifiers
 
 
-
-extension UInt: SemanticVersion.Identifier {}
-
-
+// MARK: - SemVer Extensions
 
 /// An extension to a semantic version. Currently, only pre-release and build extensions are supported.
 public protocol SemanticVersionExtension:
-    SemanticVersion.Identifier,
     CustomStringConvertible,
     ExpressibleByArrayLiteral,
     ExpressibleByIntegerLiteral,
@@ -301,7 +296,12 @@ public protocol SemanticVersionExtension:
     Comparable
 {
     /// A piece of the extension. For instance, in the pre-release extension `RC.1`, the identifiers are `RC` and `1`.
-    typealias Identifier = String
+    typealias Identifier = SemanticVersion.Identifier<OnlyAscii>
+    
+    /// Currently, all SemVer extensions can be any ASCII sequence
+    typealias CharacterRestriction = OnlyAscii
+    
+    
     
     /// All idenntifiers in this extension
     var identifiers: [Identifier] { get }
@@ -387,54 +387,33 @@ extension SemanticVersion: LosslessStringConvertible {
     /// to SemVer 2.0.0, this will succeed. If it does not, this will return `nil`.
     public init?(_ stringValue: String) {
         let matches = SemVer.regex.matches(in: stringValue, options: [], range: NSRange(location: 0, length: stringValue.count))
-        if #available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *) {
-            guard
-                !matches.isEmpty,
-                let major = matches[0].group("major", in: stringValue).flatMap({ Major($0) }),
-                let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor($0) }),
-                let patch = matches[0].group("patch", in: stringValue).flatMap({ Patch($0) })
+        
+        guard
+            !matches.isEmpty,
+            let major = matches[0].group("major", in: stringValue).flatMap({ Major.IntegerLiteralType($0) }),
+            let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor.IntegerLiteralType($0) }),
+            let patch = matches[0].group("patch", in: stringValue).flatMap({ Patch.IntegerLiteralType($0) })
                 else
-            {
-                return nil
-            }
-            
-            self.init(unchecked: (
-                major: major,
-                minor: minor,
-                patch: patch,
-                
-                preRelease: matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) },
-                build: matches[0].group("build", in: stringValue).flatMap { Build($0) })
-            )
+        {
+            return nil
         }
-        else { // FIXME: Remove ASAP
-            guard
-                !matches.isEmpty,
-                let major = matches[0].group(1, in: stringValue).flatMap({ Major($0) }),
-                let minor = matches[0].group(2, in: stringValue).flatMap({ Minor($0) }),
-                let patch = matches[0].group(3, in: stringValue).flatMap({ Patch($0) })
-                else
-            {
-                return nil
-            }
+        
+        self.init(unchecked: (
+            major: .integer(major),
+            minor: .integer(minor),
+            patch: .integer(patch),
             
-            self.init(unchecked: (
-                major: major,
-                minor: minor,
-                patch: patch,
-                
-                preRelease: matches[0].group(4, in: stringValue).flatMap { PreRelease($0) },
-                build: matches[0].group(6, in: stringValue).flatMap { Build($0) })
-            )
-        }
+            preRelease: matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) },
+            build: matches[0].group("build", in: stringValue).flatMap { Build($0) })
+        )
     }
     
     
     /// The standard String form of a semantic version
     public var description: String {
         return concat("\(major).\(minor).\(patch)",
-            (preRelease.map { $0.descriptionWithPrefix } ?? ""),
-            (build.map { $0.descriptionWithPrefix } ?? "")
+                      (preRelease.map { $0.descriptionWithPrefix } ?? ""),
+                      (build.map { $0.descriptionWithPrefix } ?? "")
         )
     }
 }
@@ -450,6 +429,10 @@ extension SemanticVersion: LosslessStringConvertible {
 /// A pre-release version indicates that the version is unstable and might not satisfy the intended compatibility
 /// requirements as denoted by its associated normal version.
 public struct SemanticVersionPreRelease: SemanticVersion.Extension {
+    
+    public typealias CharacterRestriction = OnlyAscii
+    
+    
     
     public static let prefix: Character = "-"
     
@@ -471,6 +454,10 @@ public struct SemanticVersionPreRelease: SemanticVersion.Extension {
 /// Build metadata MUST be ignored when determining version precedence.
 /// Thus two versions that differ only in the build metadata, have the same precedence.
 public struct SemanticVersionBuild: SemanticVersion.Extension {
+    
+    public typealias CharacterRestriction = OnlyAscii
+    
+    
     
     public static let prefix: Character = "+"
     
@@ -508,8 +495,8 @@ public extension SemanticVersion.Extension {
     /// Creates a new extension by converting the given array into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    init(identifiers: [CustomStringConvertible]) {
-        self.init(identifiers: identifiers.map { $0.description })
+    init<Identifier: CustomStringConvertible>(_ identifiers: [Identifier]) {
+        self.init(identifiers: identifiers.map { .string($0.description) })
     }
     
     
@@ -518,7 +505,7 @@ public extension SemanticVersion.Extension {
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     init(_ rawString: Substring) {
-        self.init(identifiers: rawString.split(separator: ".").map { String($0) })
+        self.init(rawString.split(separator: ".").map { String($0) })
     }
     
     
@@ -527,23 +514,23 @@ public extension SemanticVersion.Extension {
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     init(_ rawString: String) {
-        self.init(identifiers: rawString.split(separator: ".").map { String($0) })
+        self.init(rawString.split(separator: ".").map { String($0) })
     }
     
     
     /// Creates a new extension by converting the given varargs into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    init(_ identifiers: CustomStringConvertible...) {
-        self.init(identifiers: identifiers)
+    init<Identifier: CustomStringConvertible>(_ identifiers: Identifier...) {
+        self.init(identifiers)
     }
     
     
     /// Creates a new extension by converting the given array/varargs into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    init(arrayLiteral elements: CustomStringConvertible...) {
-        self.init(identifiers: elements)
+    init(arrayLiteral elements: Self.Identifier...) {
+        self.init(elements.map(\.description))
     }
     
     
@@ -551,7 +538,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter value: The only identifier, to become a string
     init(integerLiteral value: UInt) {
-        self.init(identifiers: [value])
+        self.init([value])
     }
     
     
