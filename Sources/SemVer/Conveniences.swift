@@ -27,7 +27,7 @@ func concat(_ strings: String...) -> String {
 /// - Parameters:
 ///   - lhs: The first value to compare
 ///   - rhs: The second value to compare
-///   - isEquivalentToNull: [optional] If one value is `nil` and the other is not, this will say whether to treat the
+///   - isEquivalentToNil: _optional_ - If one value is `nil` and the other is not, this will say whether to treat the
 ///                         non-`nil` value as if it were equivalent to `nil`. Defaults to always returning `false`.
 /// - Returns: `true` iff both are equal (both `nil`, or both non-nil with the same value), or if one is `nil` and the
 ///            other is effectively `nil`.
