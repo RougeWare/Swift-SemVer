@@ -139,7 +139,7 @@ extension SemanticVersion: Comparable {
     /// An identifier which can be ignored
     public enum IgnorableIdentifiers {
         
-        /// Don't ignore any identifiers (treat `1.2.3-Beta` as only equal to `1.2.3-Beta`; treat it different from `1.2.3` and from `1.2.3-Alpha`). Build numbers are still ignored [as per spec](https://semver.org/#spec-item-10)
+        /// Only ignore build identifiers (treat `1.2.3-Beta` as only equal to `1.2.3-Beta`; treat it different from `1.2.3` and from `1.2.3-Alpha`). Build numbers are ignored [according to the spec](https://semver.org/#spec-item-10)
         case none
         
         /// Ignore the pre-release identifier (treat `1.2.3-Beta` as equal to `1.2.3`)

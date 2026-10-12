@@ -240,7 +240,14 @@ class SemVerComparableTests: SemVerTestClass {
         XCTAssertTrue(SemVer("1.2.3-Beta")!.matches(SemVer(1,2,3), ignoring: .preRelease))
         XCTAssertTrue(SemVer("1.2.3-Beta")!.matches(SemVer("1.2.3-Alpha")!, ignoring: .preRelease))
         
-//    TODO: Assert false
+        XCTAssertFalse(SemVer(0,0,3).matches(SemVer(0,2,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer(0,2,3).matches(SemVer(0,0,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer(0,0,3).matches(SemVer(1,2,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer(1,2,3).matches(SemVer(0,0,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer(0,2,3).matches(SemVer(1,2,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer(1,2,3).matches(SemVer(0,2,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer("1.2.3-Beta")!.matches(SemVer(0,2,3), ignoring: .preRelease))
+        XCTAssertFalse(SemVer("0.2.3-Beta")!.matches(SemVer("1.2.3-Alpha")!, ignoring: .preRelease))
     }
     
     
@@ -259,16 +266,29 @@ class SemVerComparableTests: SemVerTestClass {
         XCTAssertTrue(SemVer(1,2,3, preRelease: "Beta")!.matches(SemVer(1,2,0, preRelease: "Alpha")!, ignoring: .patchAndPreRelease))
         XCTAssertTrue(SemVer(1,2,3, preRelease: "Beta")!.matches(SemVer(1,2,3, preRelease: "Alpha")!, ignoring: .patchAndPreRelease))
         
-//    TODO: Assert false
+        
+        XCTAssertFalse(SemVer(1,2,3).matches(SemVer(0,2,3), ignoring: .patchAndPreRelease))
+        XCTAssertFalse(SemVer(0,2,3).matches(SemVer(1,2,3), ignoring: .patchAndPreRelease))
+        XCTAssertFalse(SemVer(1,2,3,  preRelease: "Beta")!.matches(SemVer(3,2,3), ignoring: .patchAndPreRelease))
+        XCTAssertFalse(SemVer(3,2,3).matches(SemVer(1,2,3,  preRelease: "Beta")!, ignoring: .patchAndPreRelease))
+        XCTAssertFalse(SemVer(1,2,3, preRelease: "Beta")!.matches(SemVer(0,2,3, preRelease: "Beta")!, ignoring: .patchAndPreRelease))
     }
     
     
     // MARK: Minor
     
     func testCompareIgnoringMinor() {
-        XCTAssertTrue(SemVer(0,0,3).matches(SemVer(0,0,3), ignoring: .minorAndPatchAndPreRelease))
-        XCTAssertTrue(SemVer(0,2,3).matches(SemVer(0,2,3), ignoring: .minorAndPatchAndPreRelease))
-        XCTAssertTrue(SemVer(1,2,3).matches(SemVer(1,2,3), ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(0,0,3) .matches(SemVer(0,0,3),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(0,0,3) .matches(SemVer(0,0,99), ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(0,0,99).matches(SemVer(0,0,3),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(0,2,3) .matches(SemVer(0,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        
+        XCTAssertTrue(SemVer(0,2,3) .matches(SemVer(0,2,99), ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(0,2,99).matches(SemVer(0,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        
+        XCTAssertTrue(SemVer(1,2,3) .matches(SemVer(1,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(1,2,3) .matches(SemVer(1,0,0),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertTrue(SemVer(1,0,0) .matches(SemVer(1,2,3),  ignoring: .minorAndPatchAndPreRelease))
         
         XCTAssertTrue(SemVer(1,2,3,   preRelease: "Beta")!.matches(SemVer(1,0,0),   ignoring: .minorAndPatchAndPreRelease))
         XCTAssertTrue(SemVer(1,2,3,   preRelease: "Beta")!.matches(SemVer(1,2,0),   ignoring: .minorAndPatchAndPreRelease))
@@ -280,7 +300,16 @@ class SemVerComparableTests: SemVerTestClass {
         XCTAssertTrue(SemVer(1,2,3, preRelease: "Beta")!.matches(SemVer(1,2,0, preRelease: "Alpha")!, ignoring: .minorAndPatchAndPreRelease))
         XCTAssertTrue(SemVer(1,2,3, preRelease: "Beta")!.matches(SemVer(1,2,3, preRelease: "Alpha")!, ignoring: .minorAndPatchAndPreRelease))
         
-//    TODO: Assert false
+        
+        XCTAssertFalse(SemVer(1,2,3) .matches(SemVer(0,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertFalse(SemVer(0,2,3) .matches(SemVer(1,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertFalse(SemVer(1,2,3) .matches(SemVer(2,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertFalse(SemVer(2,2,3) .matches(SemVer(1,2,3),  ignoring: .minorAndPatchAndPreRelease))
+        
+        XCTAssertFalse(SemVer(1,2,3, preRelease: "Alpha")! .matches(SemVer(0,2,3, preRelease: "Alpha")!,  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertFalse(SemVer(0,2,3, preRelease: "Baz")! .matches(SemVer(1,2,3, preRelease: "Baz")!,  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertFalse(SemVer(1,2,3, preRelease: "Baz")! .matches(SemVer(2,2,3, preRelease: "Baz")!,  ignoring: .minorAndPatchAndPreRelease))
+        XCTAssertFalse(SemVer(2,2,3, preRelease: "Baz")! .matches(SemVer(1,2,3, preRelease: "Baz")!,  ignoring: .minorAndPatchAndPreRelease))
     }
     
     
