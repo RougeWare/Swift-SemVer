@@ -14,10 +14,10 @@ extension SemanticVersion: Comparable {
     
     /// All of the fields of this `SemanticVersion` that should be used for comparison,
     /// in order so that the first one takes the highest precedence
-    public var orderedComparableIdentifiers: [Identifier] {
-        var orderedComparableFields: [Identifier] = [major, minor, patch]
+    public var orderedComparableIdentifiers: [AnyIdentifier] {
+        var orderedComparableFields: [AnyIdentifier] = [.init(major.integerValue), .init(minor.integerValue), .init(patch.integerValue)]
         if let preRelease = preRelease {
-            orderedComparableFields.append(preRelease)
+            orderedComparableFields.append(contentsOf: preRelease.identifiers)
         }
         return orderedComparableFields
     }

@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "EssentiallyAString",
+        "repositoryURL": "https://github.com/KyNorthstar/Swift-EssentiallyAString.git",
+        "state": {
+          "branch": null,
+          "revision": "67c96e052c4377e3560c0b7b68034814370287c4",
+          "version": "1.0.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

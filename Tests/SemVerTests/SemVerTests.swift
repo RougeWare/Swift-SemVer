@@ -71,10 +71,17 @@ class SemVerTests: SemVerTestClass {
     }
     
     
-    
-    static let allTests = [
-        ("testDescription", testDescription),
-        ("testFromString", testFromString),
-        ("testInvalid", testInvalid),
-    ]
+    func testCustomSemverCompatibleScheme() {
+        XCTAssertEqual("0.0.0-ERROR.foobar", SemVer.error(title: "foobar").description)
+        XCTAssertEqual("0.0.0-ERROR.foobar.ouppy", SemVer.error(title: "foobar", details: "ouppy").description)
+        XCTAssertEqual("0.0.0-ERROR.foobar.ouppy.yay", SemVer.error(title: "foobar", details: "ouppy", "yay").description)
+    }
+}
+
+
+private extension SemVer {
+    static func error(title: String, details: String...) -> Self {
+        self.init(0,0,0, preRelease: .init(identifiers: ["ERROR", .string(title)] + details.map(Identifier.string)))
+            ?? .init(0,0,0)
+    }
 }
