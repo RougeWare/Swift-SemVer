@@ -77,12 +77,33 @@ extension SemanticVersion: Comparable {
     ///
     /// - Parameters:
     ///   - other:    The other version to compare this one against
-    ///   - ignoring: The identifiers of each version to be ignored in this comparison
+    ///   - ignoring: _optional_ - The identifiers of each version to be ignored in this comparison. If omitted, this will use an appropriate comparison for this and the given versions
     ///
     /// - Returns: `true` iff this and the given versions match when ignoring the specified identifiers
     public func matches(_ other: SemVer, ignoring ignoredIdentifiers: IgnorableIdentifiers) -> Bool {
         self.removing(ignoredIdentifiers)
             == other.removing(ignoredIdentifiers)
+    }
+    
+    
+    /// Compares this semantic version to the other, ignoring identifiers which are appropriate to ignore in this context
+    ///
+    /// - Parameters:
+    ///   - other:    The other version to compare this one against
+    ///   - ignoring: _optional_ - The identifiers of each version to be ignored in this comparison. If omitted, this will use an appropriate comparison for this and the given versions
+    ///
+    /// - Returns: `true` iff this and the given versions match when ignoring the appropriately-ignorable identifiers
+    public func matches(_ other: SemVer) -> Bool {
+        let ignoredIdentifiers: IgnorableIdentifiers =
+            if self.isInitialDevelopment
+                || other.isInitialDevelopment {
+                .none
+            }
+            else {
+                .minorAndPatchAndPreRelease
+            }
+        
+        return matches(other, ignoring: ignoredIdentifiers)
     }
     
     
@@ -105,6 +126,9 @@ extension SemanticVersion: Comparable {
             
         case .preRelease:
             copy.preRelease = nil
+            
+        case .none:
+            break
         }
         
         return copy
@@ -114,6 +138,9 @@ extension SemanticVersion: Comparable {
     
     /// An identifier which can be ignored
     public enum IgnorableIdentifiers {
+        
+        /// Only ignore build identifiers (treat `1.2.3-Beta` as only equal to `1.2.3-Beta`; treat it different from `1.2.3` and from `1.2.3-Alpha`). Build numbers are ignored [according to the spec](https://semver.org/#spec-item-10)
+        case none
         
         /// Ignore the pre-release identifier (treat `1.2.3-Beta` as equal to `1.2.3`)
         case preRelease
