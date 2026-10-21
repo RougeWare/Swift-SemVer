@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ben Leggiero on 2018-01-09.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import XCTest
@@ -75,6 +74,33 @@ class SemVerTests: SemVerTestClass {
         XCTAssertEqual("0.0.0-ERROR.foobar", SemVer.error(title: "foobar").description)
         XCTAssertEqual("0.0.0-ERROR.foobar.ouppy", SemVer.error(title: "foobar", details: "ouppy").description)
         XCTAssertEqual("0.0.0-ERROR.foobar.ouppy.yay", SemVer.error(title: "foobar", details: "ouppy", "yay").description)
+    }
+    
+    
+    /// Pins which initializer an integer-literal call selects.
+    ///
+    /// The `UInt` initializers can never fail, while the `Major`/`Minor`/`Patch` initializers are failable. Both accept
+    /// `SemVer(1,2,3)`, so if overload resolution ever starts preferring the failable one, the result silently becomes
+    /// an `Optional` and callers' code changes meaning.
+    func testIntegerLiteralInitializersAreNotFailable() {
+        let unlabeled = SemVer(1,2,3)
+        let labeled = SemVer(major: 1, minor: 2, patch: 3)
+        
+        // If a failable initializer was chosen, these would be `Optional<SemVer>`
+        XCTAssertTrue(SemVer.self == type(of: unlabeled))
+        XCTAssertTrue(SemVer.self == type(of: labeled))
+        
+        // The same pin at compile time: this stops compiling if only a failable initializer can match
+        let nonOptional: SemVer = SemVer(1,2,3)
+        
+        XCTAssertEqual(unlabeled, labeled)
+        XCTAssertEqual(unlabeled, nonOptional)
+        XCTAssertEqual(unlabeled.description, "1.2.3")
+        
+        // Extensions are what make an initializer failable, since they might not be valid
+        XCTAssertNotNil(SemVer(1,2,3, preRelease: "RC.4"))
+        XCTAssertNotNil(SemVer(1,2,3, build: 567))
+        XCTAssertNotNil(SemVer(major: 1, minor: 2, patch: 3, preRelease: "RC.4", build: 567))
     }
 }
 

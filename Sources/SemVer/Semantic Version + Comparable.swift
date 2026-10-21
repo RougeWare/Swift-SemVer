@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ky Leggiero on 2021-10-25.
-//  Copyright © 2021 Ben "Ky" Leggiero BH-1-PS.
 //
 
 import Foundation
@@ -33,23 +32,57 @@ extension SemanticVersion: Comparable {
     ///
     /// - Returns: `true` iff the left has lower precedence than the right
     public static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-        if lhs.major < rhs.major
-            || (lhs.major == rhs.major && lhs.minor < rhs.minor)
-            || (lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch < rhs.patch)
-        {
-            return true
+//        if lhs.major < rhs.major {
+//            // 1.0.0 < 2.0.0
+//            return true
+//        }
+//        else if lhs.major == rhs.major {
+//            if lhs.minor < rhs.minor {
+//                // 1.2.0 < 1.3.0
+//                return true
+//            }
+//            else if lhs.minor == rhs.minor {
+//                if lhs.patch < rhs.patch {
+//                    // 1.2.3 < 1.2.4
+//                    return true
+//                }
+//                else if lhs.patch == rhs.patch {
+//                    // 1.2.3 == 1.2.3
+//                    
+//                    if let lhsPreRelease = lhs.preRelease {
+//                        if let rhsPreRelease = rhs.preRelease {
+//                            // 1.2.3-alpha <= 1.2.3-beta.1
+//                            return lhsPreRelease < rhsPreRelease
+//                        }
+//                        else {
+//                            return true
+//                        }
+//                    }
+//                    else {
+//                        return false
+//                    }
+//                }
+//            }
+//        }
+    }
+    
+    
+    public func compare(to rhs: Self) -> ComparisonResult {
+        if self.major != rhs.major {
+            // 1.0.0 < 2.0.0
+            return self.major.compare(to: rhs.major)
         }
-        
-        if let lhsPreRelease = lhs.preRelease {
-            if let rhsPreRelease = rhs.preRelease {
-                return lhsPreRelease < rhsPreRelease
-            }
-            else {
-                return true
-            }
+        else if self.minor != rhs.minor {
+            // 1.2.0 < 1.3.0
+            return self.minor.compare(to: rhs.minor)
+        }
+        else if self.patch != rhs.patch {
+            // 1.2.3 < 1.2.4
+            return self.patch.compare(to: rhs.patch)
         }
         else {
-            return false
+            // 1.2.3 == 1.2.3
+            return self.preRelease.compare(to: rhs.preRelease)
         }
     }
     

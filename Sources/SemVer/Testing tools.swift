@@ -3,9 +3,15 @@
 //  SemVer
 //
 //  Created by Ky Leggiero on 2021-10-12.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
+
+
+// The Sources side of the testing tools, to disable assertions when testing
+
+
+
+#if DEBUG
 import Foundation
 
 
@@ -22,7 +28,7 @@ internal extension TestingTools {
     /// A bodge to change behavior based on whether a test suite is running.
     ///
     /// Ideally, this would be a compile-time flag. However, it seems that isn't being respected with my current setup, so I don't trust it.
-    static var isTesting = false
+    nonisolated(unsafe) static var isTesting = false
     
     
     /// In non-test runs, this indicates that an internal sanity check failed.
@@ -48,3 +54,4 @@ internal extension TestingTools {
 internal func assertionFailure(_ message: @autoclosure () -> String = "", file: StaticString = #file, line: UInt = #line) {
     TestingTools.assertionFailure(message(), file: file, line: line)
 }
+#endif

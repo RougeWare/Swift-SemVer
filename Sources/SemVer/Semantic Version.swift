@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ben Leggiero on 2018-01-09.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import Foundation
@@ -282,9 +281,6 @@ private extension SemVer {
 
 
 
-// MARK: - SemVer identifiers
-
-
 // MARK: - SemVer Extensions
 
 /// An extension to a semantic version. Currently, only pre-release and build extensions are supported.
@@ -296,10 +292,10 @@ public protocol SemanticVersionExtension:
     Comparable
 {
     /// A piece of the extension. For instance, in the pre-release extension `RC.1`, the identifiers are `RC` and `1`.
-    typealias Identifier = SemanticVersion.Identifier<OnlyAscii>
+    typealias Identifier = SemanticVersion.Identifier<CharacterRestrictions>
     
     /// Currently, all SemVer extensions can be any ASCII sequence
-    typealias CharacterRestriction = OnlyAscii
+    associatedtype CharacterRestrictions = OnlyAlphanumerics
     
     
     
@@ -430,7 +426,7 @@ extension SemanticVersion: LosslessStringConvertible {
 /// requirements as denoted by its associated normal version.
 public struct SemanticVersionPreRelease: SemanticVersion.Extension {
     
-    public typealias CharacterRestriction = OnlyAscii
+    public typealias CharacterRestrictions = OnlyAlphanumerics
     
     
     
@@ -455,7 +451,7 @@ public struct SemanticVersionPreRelease: SemanticVersion.Extension {
 /// Thus two versions that differ only in the build metadata, have the same precedence.
 public struct SemanticVersionBuild: SemanticVersion.Extension {
     
-    public typealias CharacterRestriction = OnlyAscii
+    public typealias CharacterRestrictions = OnlyAlphanumerics
     
     
     
@@ -565,7 +561,31 @@ public extension SemanticVersion.Extension {
     ///            precedence, this will still return `false`.
     /// - Note:  To determine the exact order, use `compare(lhs:rhs:)`
     static func <(lhs: Self, rhs: Self) -> Bool {
-        return compare(lhs: lhs, rhs: rhs) == .orderedAscending
+        switch (lhs: lhs._guts, rhs: rhs._guts) {
+        case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
+            lhsValue < rhsValue
+            
+        case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
+            // A numeric identifier too big for `UInt` is stored as a string, but still sorts as a number
+            switch (lhsIsNumeric: lhsValue.isNumericIdentifier, rhsIsNumeric: rhsValue.isNumericIdentifier) {
+            case (lhsIsNumeric: true, rhsIsNumeric: true):
+                lhsValue.utf8.count == rhsValue.utf8.count
+                ? lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+                : lhsValue.utf8.count < rhsValue.utf8.count
+            case (lhsIsNumeric: true, rhsIsNumeric: false):
+                true
+            case (lhsIsNumeric: false, rhsIsNumeric: true):
+                false
+            case (lhsIsNumeric: false, rhsIsNumeric: false):
+                lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+            }
+            
+        case (lhs: .integer, rhs: .string):
+            true
+            
+        case (lhs: .string, rhs: .integer):
+            false
+        }
     }
     
     
@@ -578,51 +598,6 @@ public extension SemanticVersion.Extension {
     ///
     /// - Returns: The order of the extensions
     static func compare(lhs: Self, rhs: Self) -> ComparisonResult {
-        
-        if lhs == rhs {
-            return .orderedSame
-        }
-        
-        let (lhsIds, rhsIds) = (lhs.identifiers, rhs.identifiers)
-        
-        let zipped = lhsIds.zip(with: rhsIds)
-        
-        for (lhsId, rhsId) in zipped {
-            if let lhsInt = UInt(lhsId) {
-                if let rhsInt = UInt(rhsId) { // Both LHS and RHS are ints; compare them normally
-                    let comparisonResult = lhsInt.compare(to: rhsInt)
-                    switch comparisonResult {
-                    case .orderedSame: continue // no difference found; keep looking until we find one
-                    case .orderedAscending, .orderedDescending: return comparisonResult
-                    }
-                }
-                else { // LHS is UInt, RHS is not; LHS < RHS
-                    return .rhsHasPrecedence // Numeric identifiers have lower precedence
-                }
-            }
-            else { // LHS is not UInt
-                if nil == UInt(rhsId) {
-                    // Neither LHS nor RHS are UInt
-                    if lhsId == rhsId {
-                        continue // If both are the same, don't use this identifier to decide precedence
-                    }
-                    else {
-                        let comparisonResult = lhsId.compare(rhsId)
-                        switch comparisonResult {
-                        case .orderedSame: continue
-                        case .orderedAscending, .orderedDescending: return comparisonResult
-                        }
-                    }
-                }
-                else {
-                    return .lhsHasPrecedence // LHS is not UInt, RHS is; LHS > RHS; Numeric identifiers have lower precedence
-                }
-            }
-        }
-        
-        // If we got here, all items are equal, so the only unequal items must be those in a longer identifier list.
-        // Longer identifier lists have higher precedence.
-        return lhsIds.count.compare(to: rhsIds.count)
     }
     
     

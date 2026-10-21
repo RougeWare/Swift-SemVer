@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ben Leggiero on 2018-01-14.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import Foundation
@@ -112,7 +111,7 @@ protocol ObjcComparable {
     ///
     /// - Parameter other: The object to compare to this one
     /// - Returns: The result of the comparison
-    func compare(to other: Self) -> ComparisonResult
+    func compare(_ other: Self) -> ComparisonResult
 }
 
 
@@ -122,7 +121,7 @@ extension UInt: ObjcComparable {
     ///
     /// - Parameter other: The `UInt` to compare to this one
     /// - Returns: The result of the comparison
-    func compare(to other: UInt) -> ComparisonResult {
+    func compare(_ other: UInt) -> ComparisonResult {
         if self == other {
             return .orderedSame
         }
@@ -142,7 +141,7 @@ extension Int: ObjcComparable {
     ///
     /// - Parameter other: The `Int` to compare to this one
     /// - Returns: The result of the comparison
-    func compare(to other: Int) -> ComparisonResult {
+    func compare(_ other: Int) -> ComparisonResult {
         if self == other {
             return .orderedSame
         }

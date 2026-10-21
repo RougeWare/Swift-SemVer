@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ky Leggiero on 2021-10-12.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import XCTest
@@ -1008,7 +1007,7 @@ class SemVerMutationTests: SemVerTestClass {
     
     
     func testInvalidPreRelease() {
-        var semVer = SemVer(1,2,3)!
+        var semVer = SemVer(1,2,3)
         
         semVer.preRelease = "00"
         XCTAssertEqual(semVer, SemVer(1,2,3))
@@ -1025,7 +1024,7 @@ class SemVerMutationTests: SemVerTestClass {
     
     
     func testInvalidBuild() {
-        var semVer = SemVer(1,2,3)!
+        var semVer = SemVer(1,2,3)
         
         semVer.build = ["", "", ""]
         XCTAssertEqual(semVer, SemVer(1,2,3))
@@ -1035,6 +1034,14 @@ class SemVerMutationTests: SemVerTestClass {
         
         semVer.build = "⛔️"
         XCTAssertEqual(semVer, SemVer(1,2,3))
+    }
+    
+    
+    func compilerErrorTests() {
+        // The following should emit a compiler error. Uncomment to check.
+        
+        var semVer = SemVer(1,2,3, preRelease: "99")!
+        semVer.preRelease!.identifiers[0].rawValue = "00"
     }
     
     

@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ky Leggiero on 2021-10-18.
-//  Copyright © 2021 Ben "Ky" Leggiero BH-1-PS.
 //
 
 import Foundation
