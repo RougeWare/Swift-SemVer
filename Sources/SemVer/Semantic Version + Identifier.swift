@@ -314,8 +314,14 @@ extension SemanticVersion.Identifier: Encodable {
 public extension SemanticVersion.Identifier
 where Self.CharacterRestrictions: CanBeAlphanumeric
 {
+    /// An unchecked string identifier
+    ///
+    /// This creates a new identifier using the given string. Since its validity depends on how this identifier is used (Major/minor/patch? Pre-release? Build?), this initializer doesn't do any validation checks itself.
+    ///
+    /// - Parameter value: The value of the identifier
+    /// - Returns: A new identifier holding the given identifier
     static func string(_ value: StringIdentifierRawValue) -> Self {
-        self.init(_guts: .string(value))
+        self.init(unchecked: value)
     }
 }
 
