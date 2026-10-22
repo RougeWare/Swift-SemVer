@@ -1,16 +1,15 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "EssentiallyAString",
-        "repositoryURL": "https://github.com/KyNorthstar/Swift-EssentiallyAString.git",
-        "state": {
-          "branch": null,
-          "revision": "67c96e052c4377e3560c0b7b68034814370287c4",
-          "version": "1.0.0"
-        }
+  "originHash" : "9b38dbe575b27c4bf9b2fc5560d4e257fcae0ee6eede0adb70d0a763c985c43d",
+  "pins" : [
+    {
+      "identity" : "swift-essentiallyastring",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/KyNorthstar/Swift-EssentiallyAString.git",
+      "state" : {
+        "revision" : "b7b69d70a021629f7ebdb15d5628b992a63373b6",
+        "version" : "1.0.1"
       }
-    ]
-  },
-  "version": 1
+    }
+  ],
+  "version" : 3
 }
