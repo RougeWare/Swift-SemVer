@@ -160,16 +160,16 @@ extension SemanticVersion.Identifier: Equatable {
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs: lhs._guts, rhs: rhs._guts) {
         case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
-            areEqual_integers(lhs: lhsValue, rhs: rhsValue)
+            lhsValue == rhsValue
             
         case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
-            areEqual_strings(lhs: lhsValue, rhs: rhsValue)
+            lhsValue == rhsValue
             
         case (lhs: .integer(let lhsValue), rhs: .string(let rhsValue)):
-            areEqual_strings(lhs: lhsValue.description, rhs: rhsValue)
+            lhsValue.description == rhsValue
             
         case (lhs: .string(let lhsValue), rhs: .integer(let rhsValue)):
-            areEqual_strings(lhs: lhsValue, rhs: rhsValue.description)
+            lhsValue == rhsValue.description
         }
     }
     
