@@ -32,42 +32,27 @@ extension SemanticVersion: Comparable {
     ///
     /// - Returns: `true` iff the left has lower precedence than the right
     public static func <(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-//        if lhs.major < rhs.major {
-//            // 1.0.0 < 2.0.0
-//            return true
-//        }
-//        else if lhs.major == rhs.major {
-//            if lhs.minor < rhs.minor {
-//                // 1.2.0 < 1.3.0
-//                return true
-//            }
-//            else if lhs.minor == rhs.minor {
-//                if lhs.patch < rhs.patch {
-//                    // 1.2.3 < 1.2.4
-//                    return true
-//                }
-//                else if lhs.patch == rhs.patch {
-//                    // 1.2.3 == 1.2.3
-//                    
-//                    if let lhsPreRelease = lhs.preRelease {
-//                        if let rhsPreRelease = rhs.preRelease {
-//                            // 1.2.3-alpha <= 1.2.3-beta.1
-//                            return lhsPreRelease < rhsPreRelease
-//                        }
-//                        else {
-//                            return true
-//                        }
-//                    }
-//                    else {
-//                        return false
-//                    }
-//                }
-//            }
-//        }
+        .orderedAscending == lhs.compare(to: rhs)
     }
     
     
     public func compare(to rhs: Self) -> ComparisonResult {
+        
+        //                                       https://semver.org/#spec-item-11
+        //
+        // Precedence refers to how versions are compared to each other when ordered.
+        // 1. Precedence MUST be calculated by separating the version into major, minor, patch and pre-release
+        //    identifiers in that order (Build metadata does not figure into precedence).
+        // 2. Precedence is determined by the first difference when comparing each of these identifiers from left to
+        //    right as follows: Major, minor, and patch versions are always compared numerically.
+        //    Example: 1.0.0 < 2.0.0 < 2.1.0 < 2.1.1.
+        // 3. When major, minor, and patch are equal, a pre-release version has lower precedence than a normal version:
+        //    Example: 1.0.0-alpha < 1.0.0.
+        //
+        // (pre-release precedence encoded in `Semantic Version + PreRelease.swift`)
+
+        
+        
         if self.major != rhs.major {
             // 1.0.0 < 2.0.0
             return self.major.compare(to: rhs.major)
@@ -80,9 +65,24 @@ extension SemanticVersion: Comparable {
             // 1.2.3 < 1.2.4
             return self.patch.compare(to: rhs.patch)
         }
-        else {
-            // 1.2.3 == 1.2.3
-            return self.preRelease.compare(to: rhs.preRelease)
+        else { // lhs Mmp == rhs Mmp
+            if let self_preRelease = self.preRelease?.nonEmptyOrNil { // self has a pre-release extension
+                if let rhs_preRelease = rhs.preRelease?.nonEmptyOrNil { // both have pre-release extensions
+                    return self_preRelease.compare(to: rhs_preRelease)
+                }
+                else { // self has a pre-release but not rhs
+                    return .rhsHasPrecedence
+                }
+            }
+            else { // self has no pre-release extension
+                if nil == rhs.preRelease { // rhs has a pre-release but not self
+                    return .lhsHasPrecedence
+                }
+                else { // neither have a pre-release extension
+                    // Checked everything except build metadata, which does not figure into precedence, so they're the same
+                    return .orderedSame
+                }
+            }
         }
     }
     
@@ -98,11 +98,7 @@ extension SemanticVersion: Comparable {
     ///
     /// - Returns: `true` if the two versions are equivalent
     public static func ==(lhs: SemanticVersion, rhs: SemanticVersion) -> Bool {
-        return lhs.major == rhs.major
-        && lhs.minor == rhs.minor
-        && lhs.patch == rhs.patch
-        && isEquivalent(lhs.preRelease, rhs.preRelease, isEquivalentToNil: { $0 == "" })
-        // According to https://semver.org/spec/v2.0.0.html#spec-item-11, "Build metadata does not figure into precedence"
+        .orderedSame == lhs.compare(to: rhs)
     }
     
     

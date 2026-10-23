@@ -9,9 +9,11 @@ This also already conforms to `Comparable` since comparison and precedence are a
 
 
 
-## Proven Strong ##
+## Guaranteed correct
 
-[`500` test assertions](./Tests/SemVerTests) prove that this library behaves precisely as described, conforming completely to the SemVer 2.0.0 spec.
+This package makes compile-time and runtime guarantees that a `SemVer` instance will _always_ represent a valid semantic version, and that comparing them will _always_ follow the SemVer spec. 
+
+[`693` test assertions](./Tests/SemVerTests) prove that this library behaves precisely as described, conforming completely to the SemVer 2.0.0 spec.
 
 
 

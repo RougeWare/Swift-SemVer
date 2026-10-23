@@ -3,6 +3,7 @@
 //  SemVer
 //
 //  Created by Ky on 2026-10-11.
+//  Some code written by directing Claude Sonnet 5.5
 //
 
 import Foundation
@@ -21,6 +22,11 @@ public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionId
     }
     
     
+    /// Creates an identifier from text which already satisfies `CharacterRestrictions`.
+    ///
+    /// Text which is a canonical number (`0`, or digits with no leading zero) becomes `.integer`; anything else becomes
+    /// `.string` and is kept verbatim. Every initializer which takes text must go through this one, so that two
+    /// identifiers are equal if and only if they have the same storage case and value.
     internal init(unchecked text: String) {
         if let integer = UInt(text), integer.description == text {
             self.init(_guts: .integer(integer))
@@ -72,22 +78,101 @@ extension SemanticVersion.Identifier: CustomStringConvertible {
 /// - Attention: DON'T use this directly. This is `public` for the compiler, but only for internal use.
 public protocol SemanticVersionIdentifierCharacterRestrictions {}
 
+/// Not visible outside this module, so nobody else can implement or even name it. Every restriction this module accepts adopts it
+internal protocol SemanticVersionIdentifierGrammar {
+    
+    /// Whether the given text is a legal identifier under this restriction
+    static func admits(_ candidate: String) -> Bool
+}
+
 /// Identifier characters are restricted to digits `[0-9]` (protocol style)
 public protocol CanBeAnyDigit: SemanticVersionIdentifierCharacterRestrictions {}
 
 /// Identifier characters are restricted to digits `[0-9]` (concrete type style)
-public enum OnlyDigits: CanBeAnyDigit {}
+///
+/// This is the grammar's `<numeric identifier>`: `0`, or digits with no leading zero
+public enum OnlyDigits: CanBeAnyDigit, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isNumericIdentifier }
+}
 
-/// Identifier characters are restricted to alphanumerics `[a-zA-Z0-9]` (protocol style)
+/// Identifier characters are restricted to ASCII alphanumerics and hyphen `[a-zA-Z0-9-]` (protocol style)
 public protocol CanBeAlphanumeric: CanBeAnyDigit {}
 
-/// Identifier characters are restricted to alphanumerics `[a-zA-Z0-9]` (concrete type style)
-public enum OnlyAlphanumerics: CanBeAlphanumeric {}
+/// Identifier characters are restricted to ASCII alphanumerics and hyphen `[a-zA-Z0-9-]` (concrete type style)
+///
+/// This is anything which any extension could contain: the grammar's `<build identifier>`
+public enum OnlyAlphanumerics: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
+}
+
+/// The grammar's `<pre-release identifier>`: like ``OnlyAscii``, except that all-digit identifiers must not have leading zeroes
+public enum PreReleaseCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isPreReleaseIdentifier }
+}
+
+/// The grammar's `<build identifier>`: like ``OnlyAscii``, and all-digit identifiers may have leading zeroes
+public enum BuildCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
+}
+
+
+
+private let chars_0_9 = UInt8(ascii: "0")...UInt8(ascii: "9")
+private let chars_A_Z = UInt8(ascii: "A")...UInt8(ascii: "Z")
+private let chars_a_z = UInt8(ascii: "a")...UInt8(ascii: "z")
+
+
+
+fileprivate extension String {
+    
+    /// The grammar's `<digits>`
+    var isDigits: Bool {
+        false == isEmpty && utf8.allSatisfy { (UInt8(ascii: "0")...UInt8(ascii: "9")).contains($0) }
+    }
+    
+    
+    /// The grammar's `<numeric identifier>`: `0`, or digits with no leading zero
+    var isNumericIdentifier: Bool {
+        isDigits && ("0" == self || UInt8(ascii: "0") != utf8.first)
+    }
+    
+    
+    /// The grammar's `<build identifier>`: one or more of `[0-9A-Za-z-]`
+    var isBuildIdentifier: Bool {
+        false == isEmpty
+        && utf8.allSatisfy {
+               chars_0_9.contains($0)
+            || chars_A_Z.contains($0)
+            || chars_a_z.contains($0)
+            ||  UInt8(ascii: "-") == $0
+        }
+    }
+    
+    
+    /// The grammar's `<pre-release identifier>`: like a build identifier, except all-digit text must be a numeric identifier
+    var isPreReleaseIdentifier: Bool {
+        isBuildIdentifier && (false == isDigits || isNumericIdentifier)
+    }
+}
 
 
 
 public extension SemanticVersion {
     typealias AnyIdentifier = Identifier<OnlyAlphanumerics>
+}
+
+
+
+public extension SemanticVersion.AnyIdentifier {
+
+    /// Widens an identifier from any extension (or from major/minor/patch) so it can be compared with the others
+    ///
+    /// This can't fail: the text of an existing identifier is already in canonical form, and every restriction's identifiers are legal under ``OnlyAscii``
+    ///
+    /// - Parameter other: The identifier to widen
+    init<Other: SemanticVersionIdentifierCharacterRestrictions>(_ other: SemanticVersion.Identifier<Other>) {
+        self.init(unchecked: other.description)
+    }
 }
 
 
@@ -165,28 +250,10 @@ extension SemanticVersion.Identifier: Equatable {
         case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
             lhsValue == rhsValue
             
-        case (lhs: .integer(let lhsValue), rhs: .string(let rhsValue)):
-            lhsValue.description == rhsValue
-            
-        case (lhs: .string(let lhsValue), rhs: .integer(let rhsValue)):
-            lhsValue == rhsValue.description
-        }
-    }
-    
-    
-    private static func areEqual_integers(lhs: DigitIdentifierRawValue, rhs: DigitIdentifierRawValue) -> Bool {
-        lhs == rhs
-    }
-    
-    
-    private static func areEqual_strings(lhs: String, rhs: String) -> Bool {
-        if let lhsInt = DigitIdentifierRawValue(lhs),
-           let rhsInt = DigitIdentifierRawValue(rhs)
-        {
-            areEqual_integers(lhs: lhsInt, rhs: rhsInt)
-        }
-        else {
-            lhs == rhs
+        // Canonical-form numbers are always stored as integers, so an integer never equals a string
+        case (lhs: .integer, rhs: .string),
+             (lhs: .string, rhs: .integer):
+            false
         }
     }
 }
@@ -194,73 +261,36 @@ extension SemanticVersion.Identifier: Equatable {
 
 
 extension SemanticVersion.Identifier: Comparable/*, ObjcComparable*/ {
+
+    /// Implements the identifier rules of SemVer 2.0.0 item 11: https://semver.org/spec/v2.0.0.html#spec-item-11
+    ///
+    /// - Numeric identifiers are compared numerically
+    /// - Other identifiers are compared lexically in ASCII order
+    /// - Numeric identifiers always have lower precedence than other identifiers
     public static func < (lhs: Self, rhs: Self) -> Bool {
         switch (lhs: lhs._guts, rhs: rhs._guts) {
         case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
             lhsValue < rhsValue
         case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
-            lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+            // A numeric identifier too big for `UInt` is stored as a string, but still sorts as a number
+            switch (lhsIsNumeric: lhsValue.isNumericIdentifier, rhsIsNumeric: rhsValue.isNumericIdentifier) {
+            case (lhsIsNumeric: true, rhsIsNumeric: true):
+                lhsValue.utf8.count == rhsValue.utf8.count
+                ? lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+                : lhsValue.utf8.count < rhsValue.utf8.count
+            case (lhsIsNumeric: true, rhsIsNumeric: false):
+                true
+            case (lhsIsNumeric: false, rhsIsNumeric: true):
+                false
+            case (lhsIsNumeric: false, rhsIsNumeric: false):
+                lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+            }
         case (lhs: .integer, rhs: .string):
             true
         case (lhs: .string, rhs: .integer):
             false
         }
     }
-    
-    
-//    public func compare(_ other: SemanticVersionIdentifier<CharacterRestrictions>) -> ComparisonResult {
-//        if let self = self as? SemanticVersionIdentifier<OnlyDigits>,
-//            let other = other as? SemanticVersionIdentifier<OnlyDigits> {
-//            return self._compare_digits(other)
-//        }
-//        else if let self = self as? SemanticVersionIdentifier<OnlyAlphanumerics>,
-//           let other = other as? SemanticVersionIdentifier<OnlyAlphanumerics> {
-//            return self._compare_ascii(other)
-//        }
-//        else if let self = self as? SemanticVersionIdentifier<OnlyAlphanumerics>,
-//           let other = other as? SemanticVersionIdentifier<OnlyDigits> {
-//            return .orderedDescending
-//        }
-//        else if let self = self as? SemanticVersionIdentifier<OnlyDigits>,
-//                let other = other as? SemanticVersionIdentifier<OnlyAlphanumerics> {
-//            return .orderedAscending
-//        }
-//        else {
-//            assertionFailure("Custom character restrictions aren't supported.")
-//            return .orderedSame
-//        }
-//    }
-//    
-//    
-//    private func _compare_digits(_ rhs: SemanticVersionIdentifier<OnlyDigits>) -> ComparisonResult
-//        where Self.CharacterRestrictions == OnlyDigits
-//    {
-//        self.integerValue.compare(to: rhs.integerValue)
-//    }
-//    
-//    
-//    private func _compare_ascii(_ rhs: SemanticVersionIdentifier<OnlyAlphanumerics>) -> ComparisonResult
-//        where Self.CharacterRestrictions == OnlyAlphanumerics
-//    {
-//        self.rawValue.compare(rhs.rawValue)
-//    }
-//    
-//    
-//    private static func areInAscendingOrder_integers(lhs: UInt, rhs: UInt) -> Bool {
-//        lhs < rhs
-//    }
-//    
-//    
-//    private static func areInAscendingOrder_strings(lhs: String, rhs: String) -> Bool {
-//        if let lhsInt = UInt(lhs),
-//           let rhsInt = UInt(rhs)
-//        {
-//            areInAscendingOrder_integers(lhs: lhsInt, rhs: rhsInt)
-//        }
-//        else {
-//            lhs < rhs
-//        }
-//    }
 }
 
 
@@ -281,15 +311,21 @@ extension SemanticVersion.Identifier: Hashable {
 
 extension SemanticVersion.Identifier: Decodable {
     public init(from decoder: any Decoder) throws {
-        if CharacterRestrictions.self is CanBeAlphanumeric {
-            
-        }
+        let candidate: String
         do {
-            self.init(_guts: .integer(try DigitIdentifierRawValue(from: decoder)))
+            candidate = try DigitIdentifierRawValue(from: decoder).description
         }
         catch {
-            self.init(_guts: .string(try StringIdentifierRawValue(from: decoder)))
+            candidate = try StringIdentifierRawValue(from: decoder)
         }
+
+        guard (CharacterRestrictions.self as? any SemanticVersionIdentifierGrammar.Type)?.admits(candidate) ?? false else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "\"\(candidate)\" is not a valid identifier for \(CharacterRestrictions.self)"))
+        }
+
+        self.init(unchecked: candidate)
     }
 }
 
@@ -343,21 +379,15 @@ extension SemanticVersion.Identifier:
         RawRepresentable
 
 
-where Self.CharacterRestrictions == OnlyAlphanumerics
+where Self.CharacterRestrictions: CanBeAlphanumeric
 {
-    // upcoming EssentiallyAString patch fixes this:
-//    public typealias StringLiteralType = StringIdentifierRawValue
-//    public typealias ExtendedGraphemeClusterLiteralType = StringIdentifierRawValue
-//    public typealias UnicodeScalarLiteralType = StringIdentifierRawValue
-    
-    
     public init(rawValue value: StringIdentifierRawValue) {
         self.init(unchecked: value)
     }
-    
-    
+
+
     public init(_ value: StringIdentifierRawValue) {
-        self.init(_guts: .string(value))
+        self.init(unchecked: value)
     }
     
     

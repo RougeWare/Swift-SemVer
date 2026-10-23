@@ -62,7 +62,7 @@ extension SemVerCodableTests {
     
     
     func testIdentifierRestrictionsDefinedElsewhereAreRejected() throws {
-        enum RogueRestriction: CanBeAscii {}
+        enum RogueRestriction: CanBeAlphanumeric {}
         
         // Proves the failure below is the rogue restriction, not the JSON
         XCTAssertEqual(["abc"] as [SemVer.AnyIdentifier], try decode([SemVer.AnyIdentifier].self, #"["abc"]"#))

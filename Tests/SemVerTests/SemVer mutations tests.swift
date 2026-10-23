@@ -1040,8 +1040,8 @@ class SemVerMutationTests: SemVerTestClass {
     func compilerErrorTests() {
         // The following should emit a compiler error. Uncomment to check.
         
-        var semVer = SemVer(1,2,3, preRelease: "99")!
-        semVer.preRelease!.identifiers[0].rawValue = "00"
+//        var semVer = SemVer(1,2,3, preRelease: "99")!
+//        semVer.preRelease!.identifiers[0].rawValue = "00"
     }
     
     

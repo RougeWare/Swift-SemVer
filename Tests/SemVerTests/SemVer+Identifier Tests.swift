@@ -59,14 +59,14 @@ struct SemVerIdentifierTests {
     @Test(arguments: ["0", "01", "007", "001", "21AF26D3----117B344092BD", "exp-sha"])
     func testBuildCharactersAdmits(_ text: String) {
         #expect(BuildCharacters.admits(text))
-        #expect(OnlyAscii.admits(text))
+        #expect(OnlyAlphanumerics.admits(text))
     }
     
     
     @Test(arguments: ["", "a.b", "a b", "é", "a_b"])
     func testBuildCharactersRefuses(_ text: String) {
         #expect(false == BuildCharacters.admits(text))
-        #expect(false == OnlyAscii.admits(text))
+        #expect(false == OnlyAlphanumerics.admits(text))
     }
     
     
