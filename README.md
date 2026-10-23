@@ -9,9 +9,11 @@ This also already conforms to `Comparable` since comparison and precedence are a
 
 
 
-## Proven Strong ##
+## Guaranteed correct
 
-[`500` test assertions](./Tests/SemVerTests) prove that this library behaves precisely as described, conforming completely to the SemVer 2.0.0 spec.
+This package makes compile-time and runtime guarantees that a `SemVer` instance will _always_ represent a valid semantic version, and that comparing them will _always_ follow the SemVer spec. 
+
+[`693` test assertions](./Tests/SemVerTests) prove that this library behaves precisely as described, conforming completely to the SemVer 2.0.0 spec.
 
 
 
@@ -50,24 +52,3 @@ nil == SemVer("1.2.-3")
 nil == SemVer("1.2.3.4")
 nil == SemVer("1.2.3-😱")
 ```
-
-
-
-## License ##
-
-This is licensed under [BH-1-PS](https://github.com/BlueHuskyStudios/Licenses/blob/master/Licenses/BH-1-PS.txt).
-
-
-
-## Requirements ##
-
-This package requires:
-- Swift 5.1 or newer
-- One of:
-    - macOS 10.14.4 or newer
-    - iOS 11 or newer
-    - tvOS 11 or newer
-    - watchOS 4 or newer
-    - Ubuntu 16.04 or newer
-
-Other version & platform combinations may work, but have not been tested.

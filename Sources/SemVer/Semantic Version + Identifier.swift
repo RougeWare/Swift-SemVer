@@ -1,0 +1,407 @@
+//
+//  Semantic Version + Identifier.swift
+//  SemVer
+//
+//  Created by Ky on 2026-10-11.
+//  Some code written by directing Claude Sonnet 5.5
+//
+
+import Foundation
+import EssentiallyAString
+
+
+
+/// A single piece of a semantic version, like `minor` or `build`
+public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionIdentifierCharacterRestrictions> {
+    
+    /// This allows us to provide more compile-time guarantees about how identifiers are used
+    private var _guts: _Guts
+    
+    fileprivate init(_guts: _Guts) {
+        self._guts = _guts
+    }
+    
+    
+    /// Creates an identifier from text which already satisfies `CharacterRestrictions`.
+    ///
+    /// Text which is a canonical number (`0`, or digits with no leading zero) becomes `.integer`; anything else becomes
+    /// `.string` and is kept verbatim. Every initializer which takes text must go through this one, so that two
+    /// identifiers are equal if and only if they have the same storage case and value.
+    internal init(unchecked text: String) {
+        if let integer = UInt(text), integer.description == text {
+            self.init(_guts: .integer(integer))
+        }
+        else {
+            self.init(_guts: .string(text))
+        }
+    }
+    
+    
+    
+    fileprivate enum _Guts {
+        case integer(DigitIdentifierRawValue)
+        case string(StringIdentifierRawValue)
+    }
+    
+    
+    
+    public typealias CharacterRestrictions = CharacterRestrictions
+    
+    // Would rather these types be derived if possible
+    public typealias DigitIdentifierRawValue = UInt
+    public typealias StringIdentifierRawValue = Swift.StringLiteralType
+    
+}
+
+
+
+extension SemanticVersion.Identifier: CustomStringConvertible {
+    
+    public var description: String {
+        switch self._guts {
+        case .integer(let value):
+            return value.description
+            
+        case .string(let value):
+            return value
+        }
+    }
+}
+
+
+
+// MARK: - Type system
+
+
+/// A marker protocol used in creating the compile-time guarantees for ``SemanticVersionIdentifier``'s felexibilities.
+///
+/// - Attention: DON'T use this directly. This is `public` for the compiler, but only for internal use.
+public protocol SemanticVersionIdentifierCharacterRestrictions {}
+
+/// Not visible outside this module, so nobody else can implement or even name it. Every restriction this module accepts adopts it
+internal protocol SemanticVersionIdentifierGrammar {
+    
+    /// Whether the given text is a legal identifier under this restriction
+    static func admits(_ candidate: String) -> Bool
+}
+
+/// Identifier characters are restricted to digits `[0-9]` (protocol style)
+public protocol CanBeAnyDigit: SemanticVersionIdentifierCharacterRestrictions {}
+
+/// Identifier characters are restricted to digits `[0-9]` (concrete type style)
+///
+/// This is the grammar's `<numeric identifier>`: `0`, or digits with no leading zero
+public enum OnlyDigits: CanBeAnyDigit, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isNumericIdentifier }
+}
+
+/// Identifier characters are restricted to ASCII alphanumerics and hyphen `[a-zA-Z0-9-]` (protocol style)
+public protocol CanBeAlphanumeric: CanBeAnyDigit {}
+
+/// Identifier characters are restricted to ASCII alphanumerics and hyphen `[a-zA-Z0-9-]` (concrete type style)
+///
+/// This is anything which any extension could contain: the grammar's `<build identifier>`
+public enum OnlyAlphanumerics: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
+}
+
+/// The grammar's `<pre-release identifier>`: like ``OnlyAscii``, except that all-digit identifiers must not have leading zeroes
+public enum PreReleaseCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isPreReleaseIdentifier }
+}
+
+/// The grammar's `<build identifier>`: like ``OnlyAscii``, and all-digit identifiers may have leading zeroes
+public enum BuildCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
+    internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
+}
+
+
+
+private let chars_0_9 = UInt8(ascii: "0")...UInt8(ascii: "9")
+private let chars_A_Z = UInt8(ascii: "A")...UInt8(ascii: "Z")
+private let chars_a_z = UInt8(ascii: "a")...UInt8(ascii: "z")
+
+
+
+fileprivate extension String {
+    
+    /// The grammar's `<digits>`
+    var isDigits: Bool {
+        false == isEmpty && utf8.allSatisfy { (UInt8(ascii: "0")...UInt8(ascii: "9")).contains($0) }
+    }
+    
+    
+    /// The grammar's `<numeric identifier>`: `0`, or digits with no leading zero
+    var isNumericIdentifier: Bool {
+        isDigits && ("0" == self || UInt8(ascii: "0") != utf8.first)
+    }
+    
+    
+    /// The grammar's `<build identifier>`: one or more of `[0-9A-Za-z-]`
+    var isBuildIdentifier: Bool {
+        false == isEmpty
+        && utf8.allSatisfy {
+               chars_0_9.contains($0)
+            || chars_A_Z.contains($0)
+            || chars_a_z.contains($0)
+            ||  UInt8(ascii: "-") == $0
+        }
+    }
+    
+    
+    /// The grammar's `<pre-release identifier>`: like a build identifier, except all-digit text must be a numeric identifier
+    var isPreReleaseIdentifier: Bool {
+        isBuildIdentifier && (false == isDigits || isNumericIdentifier)
+    }
+}
+
+
+
+public extension SemanticVersion {
+    typealias AnyIdentifier = Identifier<OnlyAlphanumerics>
+}
+
+
+
+public extension SemanticVersion.AnyIdentifier {
+
+    /// Widens an identifier from any extension (or from major/minor/patch) so it can be compared with the others
+    ///
+    /// This can't fail: the text of an existing identifier is already in canonical form, and every restriction's identifiers are legal under ``OnlyAscii``
+    ///
+    /// - Parameter other: The identifier to widen
+    init<Other: SemanticVersionIdentifierCharacterRestrictions>(_ other: SemanticVersion.Identifier<Other>) {
+        self.init(unchecked: other.description)
+    }
+}
+
+
+
+// MARK: - Integer identifiers
+
+extension SemanticVersion.Identifier: ExpressibleByIntegerLiteral
+where Self.CharacterRestrictions: CanBeAnyDigit
+{
+    public typealias IntegerLiteralType = DigitIdentifierRawValue
+    
+    
+    
+    public init(integerLiteral value: IntegerLiteralType) {
+        self.init(_guts: .integer(value))
+    }
+    
+    
+    public init(_ value: DigitIdentifierRawValue) {
+        self.init(_guts: .integer(value))
+    }
+    
+    
+    public static func integer(_ value: DigitIdentifierRawValue) -> Self {
+        self.init(_guts: .integer(value))
+    }
+}
+
+
+
+public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyDigits {
+    var integerValue: DigitIdentifierRawValue {
+        switch self._guts {
+        case .integer(let value):
+            return value
+            
+        case .string(let value):
+            if let intValue = DigitIdentifierRawValue(value) {
+                return intValue
+            }
+            else {
+                assertionFailure("`inteverValue` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`")
+                return .max
+            }
+        }
+    }
+    
+    
+    static func += (lhs: inout Self, rhs: DigitIdentifierRawValue) {
+        switch lhs._guts {
+        case .integer(var lhsInt):
+            lhsInt += rhs
+            lhs = .integer(lhsInt)
+            
+        case .string(let lhsString):
+            if var lhsInt = DigitIdentifierRawValue(lhsString) {
+                lhsInt += rhs
+                lhs = .integer(lhsInt)
+            }
+            else {
+                assertionFailure("`+=` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`")
+            }
+        }
+    }
+}
+
+
+
+extension SemanticVersion.Identifier: Equatable {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs: lhs._guts, rhs: rhs._guts) {
+        case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
+            lhsValue == rhsValue
+            
+        case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
+            lhsValue == rhsValue
+            
+        // Canonical-form numbers are always stored as integers, so an integer never equals a string
+        case (lhs: .integer, rhs: .string),
+             (lhs: .string, rhs: .integer):
+            false
+        }
+    }
+}
+
+
+
+extension SemanticVersion.Identifier: Comparable/*, ObjcComparable*/ {
+
+    /// Implements the identifier rules of SemVer 2.0.0 item 11: https://semver.org/spec/v2.0.0.html#spec-item-11
+    ///
+    /// - Numeric identifiers are compared numerically
+    /// - Other identifiers are compared lexically in ASCII order
+    /// - Numeric identifiers always have lower precedence than other identifiers
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs: lhs._guts, rhs: rhs._guts) {
+        case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
+            lhsValue < rhsValue
+        case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
+            // A numeric identifier too big for `UInt` is stored as a string, but still sorts as a number
+            switch (lhsIsNumeric: lhsValue.isNumericIdentifier, rhsIsNumeric: rhsValue.isNumericIdentifier) {
+            case (lhsIsNumeric: true, rhsIsNumeric: true):
+                lhsValue.utf8.count == rhsValue.utf8.count
+                ? lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+                : lhsValue.utf8.count < rhsValue.utf8.count
+            case (lhsIsNumeric: true, rhsIsNumeric: false):
+                true
+            case (lhsIsNumeric: false, rhsIsNumeric: true):
+                false
+            case (lhsIsNumeric: false, rhsIsNumeric: false):
+                lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+            }
+        case (lhs: .integer, rhs: .string):
+            true
+        case (lhs: .string, rhs: .integer):
+            false
+        }
+    }
+}
+
+
+
+extension SemanticVersion.Identifier: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        switch self._guts {
+        case .integer(let uInt):
+            uInt.hash(into: &hasher)
+            
+        case .string(let stringLiteralType):
+            stringLiteralType.hash(into: &hasher)
+        }
+    }
+}
+
+
+
+extension SemanticVersion.Identifier: Decodable {
+    public init(from decoder: any Decoder) throws {
+        let candidate: String
+        do {
+            candidate = try DigitIdentifierRawValue(from: decoder).description
+        }
+        catch {
+            candidate = try StringIdentifierRawValue(from: decoder)
+        }
+
+        guard (CharacterRestrictions.self as? any SemanticVersionIdentifierGrammar.Type)?.admits(candidate) ?? false else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: decoder.codingPath,
+                debugDescription: "\"\(candidate)\" is not a valid identifier for \(CharacterRestrictions.self)"))
+        }
+
+        self.init(unchecked: candidate)
+    }
+}
+
+
+
+extension SemanticVersion.Identifier: Encodable {
+    public func encode(to encoder: any Encoder) throws {
+        switch self._guts {
+        case .integer(let uInt):
+            try uInt.encode(to: encoder)
+            
+        case .string(let stringLiteralType):
+            try stringLiteralType.encode(to: encoder)
+        }
+    }
+}
+
+
+
+// MARK: - String identifiers
+
+public extension SemanticVersion.Identifier
+where Self.CharacterRestrictions: CanBeAlphanumeric
+{
+    /// An unchecked string identifier
+    ///
+    /// This creates a new identifier using the given string. Since its validity depends on how this identifier is used (Major/minor/patch? Pre-release? Build?), this initializer doesn't do any validation checks itself.
+    ///
+    /// - Parameter value: The value of the identifier
+    /// - Returns: A new identifier holding the given identifier
+    static func string(_ value: StringIdentifierRawValue) -> Self {
+        self.init(unchecked: value)
+    }
+}
+
+
+extension SemanticVersion.Identifier:
+    EssentiallyAString,
+        StringProtocol,
+        BidirectionalCollection,
+        Collection,
+        Sequence,
+        ExpressibleByStringInterpolation,
+        ExpressibleByStringLiteral,
+            ExpressibleByExtendedGraphemeClusterLiteral,
+                ExpressibleByUnicodeScalarLiteral,
+        LosslessStringConvertible,
+        TextOutputStream,
+        TextOutputStreamable,
+    MutableRawRepresentable,
+        RawRepresentable
+
+
+where Self.CharacterRestrictions: CanBeAlphanumeric
+{
+    public init(rawValue value: StringIdentifierRawValue) {
+        self.init(unchecked: value)
+    }
+
+
+    public init(_ value: StringIdentifierRawValue) {
+        self.init(unchecked: value)
+    }
+    
+    
+    public init(_ subsequence: SubSequence) {
+        self.init(rawValue: .init(subsequence))
+    }
+    
+    
+    public var rawValue: StringIdentifierRawValue {
+        get { description }
+        
+        @available(*, unavailable, message: "Identifiers are immutable")
+        set {
+            assertionFailure("Identifiers are immutable; tried to set rawValue of \(self) to \"\(newValue)\"")
+        }
+    }
+}

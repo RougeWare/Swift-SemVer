@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ben Leggiero on 2018-01-09.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import Foundation
@@ -33,9 +32,9 @@ public typealias SemVer = SemanticVersion
 public struct SemanticVersion {
     
     public typealias Identifier = SemanticVersionIdentifier
-    public typealias Major = UInt
-    public typealias Minor = UInt
-    public typealias Patch = UInt
+    public typealias Major = Identifier<OnlyDigits>
+    public typealias Minor = Identifier<OnlyDigits>
+    public typealias Patch = Identifier<OnlyDigits>
     public typealias Extension = SemanticVersionExtension
     public typealias PreRelease = Extension.PreRelease
     public typealias Build = Extension.Build
@@ -242,9 +241,9 @@ public struct SemanticVersion {
     ///   - minor:      The MINOR version
     ///   - patch:      The PATCH version
     public init(major: UInt, minor: UInt, patch: UInt) {
-        self.init(unchecked: (major: major,
-                              minor: minor,
-                              patch: patch,
+        self.init(unchecked: (major: .integer(major),
+                              minor: .integer(minor),
+                              patch: .integer(patch),
                               preRelease: nil,
                               build: nil))
     }
@@ -259,9 +258,9 @@ public struct SemanticVersion {
     ///   - minor:      The MINOR version
     ///   - patch:      The PATCH version
     public init(_ major: UInt, _ minor: UInt, _ patch: UInt) {
-        self.init(unchecked: (major: major,
-                              minor: minor,
-                              patch: patch,
+        self.init(unchecked: (major: .integer(major),
+                              minor: .integer(minor),
+                              patch: .integer(patch),
                               preRelease: nil,
                               build: nil))
     }
@@ -269,7 +268,7 @@ public struct SemanticVersion {
 
 
 
-private extension SemVer {
+private extension SemanticVersion {
     
     /// Determines whether this semantic version is valid
     ///
@@ -278,42 +277,6 @@ private extension SemVer {
         let stringForm = description
         return Self.regex.numberOfMatches(in: stringForm, options: [], range: NSRange(location: 0, length: stringForm.count)) > 0
     }
-}
-
-
-
-/// A single piece of a semantic version, like `minor` or `build`
-public protocol SemanticVersionIdentifier {}
-
-
-
-extension UInt: SemanticVersion.Identifier {}
-
-
-
-/// An extension to a semantic version. Currently, only pre-release and build extensions are supported.
-public protocol SemanticVersionExtension:
-    SemanticVersion.Identifier,
-    CustomStringConvertible,
-    ExpressibleByArrayLiteral,
-    ExpressibleByIntegerLiteral,
-    ExpressibleByStringLiteral,
-    Comparable
-{
-    /// A piece of the extension. For instance, in the pre-release extension `RC.1`, the identifiers are `RC` and `1`.
-    typealias Identifier = String
-    
-    /// All idenntifiers in this extension
-    var identifiers: [Identifier] { get }
-    
-    /// The character that precedes this extension when it appears in a SemVer.
-    /// For example, the `-` in `1.0.0-RC.1`, or the + in `1.0.0+123`.
-    static var prefix: Character { get }
-    
-    /// Creates a new SemVer extension with the given identifiers
-    ///
-    /// - Parameter identifiers: All identifiers of this extension
-    init(identifiers: [Identifier])
 }
 
 
@@ -387,269 +350,34 @@ extension SemanticVersion: LosslessStringConvertible {
     /// to SemVer 2.0.0, this will succeed. If it does not, this will return `nil`.
     public init?(_ stringValue: String) {
         let matches = SemVer.regex.matches(in: stringValue, options: [], range: NSRange(location: 0, length: stringValue.count))
-        if #available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *) {
-            guard
-                !matches.isEmpty,
-                let major = matches[0].group("major", in: stringValue).flatMap({ Major($0) }),
-                let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor($0) }),
-                let patch = matches[0].group("patch", in: stringValue).flatMap({ Patch($0) })
+        
+        guard
+            !matches.isEmpty,
+            let major = matches[0].group("major", in: stringValue).flatMap({ Major.IntegerLiteralType($0) }),
+            let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor.IntegerLiteralType($0) }),
+            let patch = matches[0].group("patch", in: stringValue).flatMap({ Patch.IntegerLiteralType($0) })
                 else
-            {
-                return nil
-            }
-            
-            self.init(unchecked: (
-                major: major,
-                minor: minor,
-                patch: patch,
-                
-                preRelease: matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) },
-                build: matches[0].group("build", in: stringValue).flatMap { Build($0) })
-            )
+        {
+            return nil
         }
-        else { // FIXME: Remove ASAP
-            guard
-                !matches.isEmpty,
-                let major = matches[0].group(1, in: stringValue).flatMap({ Major($0) }),
-                let minor = matches[0].group(2, in: stringValue).flatMap({ Minor($0) }),
-                let patch = matches[0].group(3, in: stringValue).flatMap({ Patch($0) })
-                else
-            {
-                return nil
-            }
+        
+        self.init(unchecked: (
+            major: .integer(major),
+            minor: .integer(minor),
+            patch: .integer(patch),
             
-            self.init(unchecked: (
-                major: major,
-                minor: minor,
-                patch: patch,
-                
-                preRelease: matches[0].group(4, in: stringValue).flatMap { PreRelease($0) },
-                build: matches[0].group(6, in: stringValue).flatMap { Build($0) })
-            )
-        }
+            preRelease: matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) },
+            build: matches[0].group("build", in: stringValue).flatMap { Build($0) })
+        )
     }
     
     
     /// The standard String form of a semantic version
     public var description: String {
         return concat("\(major).\(minor).\(patch)",
-            (preRelease.map { $0.descriptionWithPrefix } ?? ""),
-            (build.map { $0.descriptionWithPrefix } ?? "")
+                      (preRelease.map { $0.descriptionWithPrefix } ?? ""),
+                      (build.map { $0.descriptionWithPrefix } ?? "")
         )
-    }
-}
-
-
-
-/// The PRE-RELEASE extension; this identifies versions that are available before being declared stable.
-///
-/// Identifiers MUST comprise only ASCII alphanumerics and hyphen `[0-9A-Za-z-]`.
-/// Identifiers MUST NOT be empty.
-/// Numeric identifiers MUST NOT include leading zeroes.
-/// Pre-release versions have a lower precedence than the associated normal version.
-/// A pre-release version indicates that the version is unstable and might not satisfy the intended compatibility
-/// requirements as denoted by its associated normal version.
-public struct SemanticVersionPreRelease: SemanticVersion.Extension {
-    
-    public static let prefix: Character = "-"
-    
-    public var identifiers: [Identifier]
-    
-    
-    public init(identifiers: [Identifier]) {
-        self.identifiers = identifiers
-    }
-}
-
-
-
-/// The BUILD metadata; this identifies some information about a particular build of a version, and is not
-/// considered for equivalence nor precedence.
-///
-/// Identifiers MUST comprise only ASCII alphanumerics and hyphen `[0-9A-Za-z-]`.
-/// Identifiers MUST NOT be empty.
-/// Build metadata MUST be ignored when determining version precedence.
-/// Thus two versions that differ only in the build metadata, have the same precedence.
-public struct SemanticVersionBuild: SemanticVersion.Extension {
-    
-    public static let prefix: Character = "+"
-    
-    public var identifiers: [Identifier]
-    
-    
-    public init(identifiers: [Identifier]) {
-        self.identifiers = identifiers
-    }
-}
-
-
-
-public extension SemanticVersion.Extension {
-    
-    typealias PreRelease = SemanticVersionPreRelease
-    typealias Build = SemanticVersionBuild
-    
-    
-    
-    /// Creates a string of period-separated identifiers, so `["public", "RC", 1]` would become `"public.RC.1"`
-    var description: String {
-        return identifiers.joined(separator: ".")
-    }
-    
-    
-    /// Creates a string suitable for naïve concatenation with a semantic version string.
-    /// For example, a pre-release extension like `["RC", 1]` would become `"-RC.1"`, and a build like
-    /// `["2018", "01", "15"]` would become `"+2018.01.15"`.
-    var descriptionWithPrefix: String {
-        return "\(type(of: self).prefix)\(description)"
-    }
-    
-    
-    /// Creates a new extension by converting the given array into an array of strings
-    ///
-    /// - Parameter identifiers: Soon-to-be identifiers
-    init(identifiers: [CustomStringConvertible]) {
-        self.init(identifiers: identifiers.map { $0.description })
-    }
-    
-    
-    /// Creates a new extension by separating the given raw string by any periods in it
-    ///
-    /// - Parameter rawString: A raw representation of a semantic version string.
-    ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    init(_ rawString: Substring) {
-        self.init(identifiers: rawString.split(separator: ".").map { String($0) })
-    }
-    
-    
-    /// Creates a new extension by separating the given raw string by any periods in it
-    ///
-    /// - Parameter rawString: A raw representation of a semantic version string.
-    ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    init(_ rawString: String) {
-        self.init(identifiers: rawString.split(separator: ".").map { String($0) })
-    }
-    
-    
-    /// Creates a new extension by converting the given varargs into an array of strings
-    ///
-    /// - Parameter identifiers: Soon-to-be identifiers
-    init(_ identifiers: CustomStringConvertible...) {
-        self.init(identifiers: identifiers)
-    }
-    
-    
-    /// Creates a new extension by converting the given array/varargs into an array of strings
-    ///
-    /// - Parameter identifiers: Soon-to-be identifiers
-    init(arrayLiteral elements: CustomStringConvertible...) {
-        self.init(identifiers: elements)
-    }
-    
-    
-    /// Creates a new extension by converting the given integer into a string and assuming that is the only identifier
-    ///
-    /// - Parameter value: The only identifier, to become a string
-    init(integerLiteral value: UInt) {
-        self.init(identifiers: [value])
-    }
-    
-    
-    /// Creates a new extension by separating the given raw string by any periods in it
-    ///
-    /// - Parameter rawString: A raw representation of a semantic version string.
-    ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    init(stringLiteral value: String) {
-        self.init(value)
-    }
-}
-
-
-
-public extension SemanticVersion.Extension {
-    
-    /// Determines whether the given two SemVer extensions are in ascending order. This attempts to exactly match the
-    /// behavior described in the SemVer 2.0.0 spec paragraph 11: https://semver.org/spec/v2.0.0.html#spec-item-11
-    ///
-    /// - Parameters:
-    ///   - lhs: The first extension to compare
-    ///   - rhs: The second extension to compare
-    /// - Returns: `true` iff `lhs` is less than, or has lower precedence than, `rhs`. If they have the same
-    ///            precedence, this will still return `false`.
-    /// - Note:  To determine the exact order, use `compare(lhs:rhs:)`
-    static func <(lhs: Self, rhs: Self) -> Bool {
-        return compare(lhs: lhs, rhs: rhs) == .orderedAscending
-    }
-    
-    
-    /// Compares two SemVer extensions and returns the determined order. This attempts to exactly match the
-    /// behavior described in the SemVer 2.0.0 spec paragraph 11: https://semver.org/spec/v2.0.0.html#spec-item-11
-    ///
-    /// - Parameters:
-    ///   - lhs: The first extension to compare
-    ///   - rhs: The second extension to compare
-    ///
-    /// - Returns: The order of the extensions
-    static func compare(lhs: Self, rhs: Self) -> ComparisonResult {
-        
-        if lhs == rhs {
-            return .orderedSame
-        }
-        
-        let (lhsIds, rhsIds) = (lhs.identifiers, rhs.identifiers)
-        
-        let zipped = lhsIds.zip(with: rhsIds)
-        
-        for (lhsId, rhsId) in zipped {
-            if let lhsInt = UInt(lhsId) {
-                if let rhsInt = UInt(rhsId) { // Both LHS and RHS are ints; compare them normally
-                    let comparisonResult = lhsInt.compare(to: rhsInt)
-                    switch comparisonResult {
-                    case .orderedSame: continue // no difference found; keep looking until we find one
-                    case .orderedAscending, .orderedDescending: return comparisonResult
-                    }
-                }
-                else { // LHS is UInt, RHS is not; LHS < RHS
-                    return .rhsHasPrecedence // Numeric identifiers have lower precedence
-                }
-            }
-            else { // LHS is not UInt
-                if nil == UInt(rhsId) {
-                    // Neither LHS nor RHS are UInt
-                    if lhsId == rhsId {
-                        continue // If both are the same, don't use this identifier to decide precedence
-                    }
-                    else {
-                        let comparisonResult = lhsId.compare(rhsId)
-                        switch comparisonResult {
-                        case .orderedSame: continue
-                        case .orderedAscending, .orderedDescending: return comparisonResult
-                        }
-                    }
-                }
-                else {
-                    return .lhsHasPrecedence // LHS is not UInt, RHS is; LHS > RHS; Numeric identifiers have lower precedence
-                }
-            }
-        }
-        
-        // If we got here, all items are equal, so the only unequal items must be those in a longer identifier list.
-        // Longer identifier lists have higher precedence.
-        return lhsIds.count.compare(to: rhsIds.count)
-    }
-    
-    
-    /// Determines whether one SemVer 2.0.0 extension is equal to another
-    ///
-    /// - Parameters:
-    ///   - lhs: One extension
-    ///   - rhs: Another extension
-    ///
-    /// - Returns: `true` iff the given two extensions are equal
-    static func ==(lhs: Self, rhs: Self) -> Bool {
-        let (lhsIdentifiers, rhsIdenditifers) = (lhs.identifiers, rhs.identifiers)
-        return lhsIdentifiers.count == rhsIdenditifers.count
-            && !lhsIdentifiers.zip(with: rhsIdenditifers).contains(where: !=)
     }
 }
 
