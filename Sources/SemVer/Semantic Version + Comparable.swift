@@ -16,7 +16,7 @@ extension SemanticVersion: Comparable {
     public var orderedComparableIdentifiers: [AnyIdentifier] {
         var orderedComparableFields: [AnyIdentifier] = [.init(major.integerValue), .init(minor.integerValue), .init(patch.integerValue)]
         if let preRelease = preRelease {
-            orderedComparableFields.append(contentsOf: preRelease.identifiers)
+            orderedComparableFields.append(contentsOf: preRelease.identifiers.map(AnyIdentifier.init))
         }
         return orderedComparableFields
     }
@@ -75,7 +75,7 @@ extension SemanticVersion: Comparable {
                 }
             }
             else { // self has no pre-release extension
-                if nil == rhs.preRelease { // rhs has a pre-release but not self
+                if nil != rhs.preRelease { // rhs has a pre-release but not self
                     return .lhsHasPrecedence
                 }
                 else { // neither have a pre-release extension

@@ -105,12 +105,12 @@ public enum OnlyAlphanumerics: CanBeAlphanumeric, SemanticVersionIdentifierGramm
     internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
 }
 
-/// The grammar's `<pre-release identifier>`: like ``OnlyAscii``, except that all-digit identifiers must not have leading zeroes
+/// The grammar's `<pre-release identifier>`: like ``OnlyAlphanumerics``, except that all-digit identifiers must not have leading zeroes
 public enum PreReleaseCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
     internal static func admits(_ candidate: String) -> Bool { candidate.isPreReleaseIdentifier }
 }
 
-/// The grammar's `<build identifier>`: like ``OnlyAscii``, and all-digit identifiers may have leading zeroes
+/// The grammar's `<build identifier>`: like ``OnlyAlphanumerics``, and all-digit identifiers may have leading zeroes
 public enum BuildCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
     internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
 }
@@ -131,21 +131,21 @@ fileprivate extension String {
     }
     
     
-    /// The grammar's `<numeric identifier>`: `0`, or digits with no leading zero
+    /// A numeric identifier is either the digit `0`, or any all-digits string **WITHOUT** leading zeroes
     var isNumericIdentifier: Bool {
         isDigits && ("0" == self || UInt8(ascii: "0") != utf8.first)
     }
     
     
-    /// The grammar's `<build identifier>`: one or more of `[0-9A-Za-z-]`
+    /// A build identifier is one or more of `[0-9A-Za-z-]`
     var isBuildIdentifier: Bool {
         false == isEmpty
-        && utf8.allSatisfy {
-               chars_0_9.contains($0)
-            || chars_A_Z.contains($0)
-            || chars_a_z.contains($0)
-            ||  UInt8(ascii: "-") == $0
-        }
+            && utf8.allSatisfy {
+                   chars_0_9.contains($0)
+                || chars_A_Z.contains($0)
+                || chars_a_z.contains($0)
+                ||  UInt8(ascii: "-") == $0
+            }
     }
     
     
@@ -167,7 +167,7 @@ public extension SemanticVersion.AnyIdentifier {
 
     /// Widens an identifier from any extension (or from major/minor/patch) so it can be compared with the others
     ///
-    /// This can't fail: the text of an existing identifier is already in canonical form, and every restriction's identifiers are legal under ``OnlyAscii``
+    /// This can't fail: the text of an existing identifier is already in canonical form, and every restriction's identifiers are legal under ``OnlyAlphanumerics``
     ///
     /// - Parameter other: The identifier to widen
     init<Other: SemanticVersionIdentifierCharacterRestrictions>(_ other: SemanticVersion.Identifier<Other>) {
@@ -271,22 +271,29 @@ extension SemanticVersion.Identifier: Comparable/*, ObjcComparable*/ {
         switch (lhs: lhs._guts, rhs: rhs._guts) {
         case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
             lhsValue < rhsValue
+            
         case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
             // A numeric identifier too big for `UInt` is stored as a string, but still sorts as a number
             switch (lhsIsNumeric: lhsValue.isNumericIdentifier, rhsIsNumeric: rhsValue.isNumericIdentifier) {
+                // `isNumericIdentifier` excludes leading zeroes
             case (lhsIsNumeric: true, rhsIsNumeric: true):
                 lhsValue.utf8.count == rhsValue.utf8.count
-                ? lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
-                : lhsValue.utf8.count < rhsValue.utf8.count
+                    ? lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
+                    : lhsValue.utf8.count < rhsValue.utf8.count
+                
             case (lhsIsNumeric: true, rhsIsNumeric: false):
                 true
+                
             case (lhsIsNumeric: false, rhsIsNumeric: true):
                 false
+                
             case (lhsIsNumeric: false, rhsIsNumeric: false):
                 lhsValue.utf8.lexicographicallyPrecedes(rhsValue.utf8)
             }
+            
         case (lhs: .integer, rhs: .string):
             true
+            
         case (lhs: .string, rhs: .integer):
             false
         }

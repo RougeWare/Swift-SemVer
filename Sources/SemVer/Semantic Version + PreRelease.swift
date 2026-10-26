@@ -18,7 +18,7 @@ import Foundation
 /// requirements as denoted by its associated normal version.
 public struct SemanticVersionPreRelease: SemanticVersion.Extension {
     
-    public typealias CharacterRestrictions = OnlyAlphanumerics
+    public typealias CharacterRestrictions = PreReleaseCharacters
     
     
     
@@ -43,10 +43,6 @@ public struct SemanticVersionPreRelease: SemanticVersion.Extension {
         //     3. Numeric identifiers always have lower precedence than non-numeric identifiers.
         //     4. A larger set of pre-release fields has a higher precedence than a smaller set, if all of the
         //        preceding identifiers are equal.
-        
-        if lhs == rhs {
-            return .orderedSame
-        }
         
         let (lhsIds, rhsIds) = (lhs.identifiers, rhs.identifiers)
         
