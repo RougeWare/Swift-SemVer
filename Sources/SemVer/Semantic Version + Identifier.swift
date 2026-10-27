@@ -27,13 +27,29 @@ public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionId
     /// Text which is a canonical number (`0`, or digits with no leading zero) becomes `.integer`; anything else becomes
     /// `.string` and is kept verbatim. Every initializer which takes text must go through this one, so that two
     /// identifiers are equal if and only if they have the same storage case and value.
-    internal init(unchecked text: String) {
+    private init(_unchecked text: String) {
         if let integer = UInt(text), integer.description == text {
             self.init(_guts: .integer(integer))
         }
         else {
             self.init(_guts: .string(text))
         }
+    }
+    
+    
+    /// If the given text is a valid identifier, then this initializes it. Else, it returns `nil`.
+    ///
+    /// Whether or not the identifier is valid, depends on the character restrictions of this identifier type.
+    ///
+    /// - Parameter text: The identifier as a raw string
+    public init?(validating text: String) {
+        guard let Grammar = (CharacterRestrictions.self as? any SemanticVersionIdentifierGrammar.Type),
+              Grammar.isValid(text)
+        else {
+            return nil
+        }
+        
+        self.init(_unchecked: text)
     }
     
     
@@ -82,7 +98,7 @@ public protocol SemanticVersionIdentifierCharacterRestrictions {}
 internal protocol SemanticVersionIdentifierGrammar {
     
     /// Whether the given text is a legal identifier under this restriction
-    static func admits(_ candidate: String) -> Bool
+    static func isValid(_ candidate: String) -> Bool
 }
 
 /// Identifier characters are restricted to digits `[0-9]` (protocol style)
@@ -92,7 +108,7 @@ public protocol CanBeAnyDigit: SemanticVersionIdentifierCharacterRestrictions {}
 ///
 /// This is the grammar's `<numeric identifier>`: `0`, or digits with no leading zero
 public enum OnlyDigits: CanBeAnyDigit, SemanticVersionIdentifierGrammar {
-    internal static func admits(_ candidate: String) -> Bool { candidate.isNumericIdentifier }
+    internal static func isValid(_ candidate: String) -> Bool { candidate.isNumericIdentifier }
 }
 
 /// Identifier characters are restricted to ASCII alphanumerics and hyphen `[a-zA-Z0-9-]` (protocol style)
@@ -102,24 +118,26 @@ public protocol CanBeAlphanumeric: CanBeAnyDigit {}
 ///
 /// This is anything which any extension could contain: the grammar's `<build identifier>`
 public enum OnlyAlphanumerics: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
-    internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
+    internal static func isValid(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
 }
 
 /// The grammar's `<pre-release identifier>`: like ``OnlyAlphanumerics``, except that all-digit identifiers must not have leading zeroes
 public enum PreReleaseCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
-    internal static func admits(_ candidate: String) -> Bool { candidate.isPreReleaseIdentifier }
+    internal static func isValid(_ candidate: String) -> Bool { candidate.isPreReleaseIdentifier }
 }
 
 /// The grammar's `<build identifier>`: like ``OnlyAlphanumerics``, and all-digit identifiers may have leading zeroes
 public enum BuildCharacters: CanBeAlphanumeric, SemanticVersionIdentifierGrammar {
-    internal static func admits(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
+    internal static func isValid(_ candidate: String) -> Bool { candidate.isBuildIdentifier }
 }
 
 
 
-private let chars_0_9 = UInt8(ascii: "0")...UInt8(ascii: "9")
-private let chars_A_Z = UInt8(ascii: "A")...UInt8(ascii: "Z")
-private let chars_a_z = UInt8(ascii: "a")...UInt8(ascii: "z")
+private let `ascii_-` = UInt8(ascii: "-")
+private let ascii_0   = UInt8(ascii: "0")
+private let ascii_0_9 =           ascii_0...UInt8(ascii: "9")
+private let ascii_A_Z = UInt8(ascii: "A")...UInt8(ascii: "Z")
+private let ascii_a_z = UInt8(ascii: "a")...UInt8(ascii: "z")
 
 
 
@@ -127,13 +145,13 @@ fileprivate extension String {
     
     /// The grammar's `<digits>`
     var isDigits: Bool {
-        false == isEmpty && utf8.allSatisfy { (UInt8(ascii: "0")...UInt8(ascii: "9")).contains($0) }
+        false == isEmpty && utf8.allSatisfy { ascii_0_9.contains($0) }
     }
     
     
     /// A numeric identifier is either the digit `0`, or any all-digits string **WITHOUT** leading zeroes
     var isNumericIdentifier: Bool {
-        isDigits && ("0" == self || UInt8(ascii: "0") != utf8.first)
+        isDigits && ("0" == self || ascii_0 != utf8.first)
     }
     
     
@@ -141,10 +159,10 @@ fileprivate extension String {
     var isBuildIdentifier: Bool {
         false == isEmpty
             && utf8.allSatisfy {
-                   chars_0_9.contains($0)
-                || chars_A_Z.contains($0)
-                || chars_a_z.contains($0)
-                ||  UInt8(ascii: "-") == $0
+                    ascii_0_9.contains($0)
+                ||  ascii_A_Z.contains($0)
+                ||  ascii_a_z.contains($0)
+                || `ascii_-` == $0
             }
     }
     
@@ -170,8 +188,8 @@ public extension SemanticVersion.AnyIdentifier {
     /// This can't fail: the text of an existing identifier is already in canonical form, and every restriction's identifiers are legal under ``OnlyAlphanumerics``
     ///
     /// - Parameter other: The identifier to widen
-    init<Other: SemanticVersionIdentifierCharacterRestrictions>(_ other: SemanticVersion.Identifier<Other>) {
-        self.init(unchecked: other.description)
+    init?<Other: SemanticVersionIdentifierCharacterRestrictions>(_ other: SemanticVersion.Identifier<Other>) {
+        self.init(validating: other.description)
     }
 }
 
@@ -326,13 +344,13 @@ extension SemanticVersion.Identifier: Decodable {
             candidate = try StringIdentifierRawValue(from: decoder)
         }
 
-        guard (CharacterRestrictions.self as? any SemanticVersionIdentifierGrammar.Type)?.admits(candidate) ?? false else {
+        guard (CharacterRestrictions.self as? any SemanticVersionIdentifierGrammar.Type)?.isValid(candidate) ?? false else {
             throw DecodingError.dataCorrupted(.init(
                 codingPath: decoder.codingPath,
                 debugDescription: "\"\(candidate)\" is not a valid identifier for \(CharacterRestrictions.self)"))
         }
 
-        self.init(unchecked: candidate)
+        self.init(_unchecked: candidate)
     }
 }
 
@@ -357,14 +375,14 @@ extension SemanticVersion.Identifier: Encodable {
 public extension SemanticVersion.Identifier
 where Self.CharacterRestrictions: CanBeAlphanumeric
 {
-    /// An unchecked string identifier
+    /// A string identifier
     ///
-    /// This creates a new identifier using the given string. Since its validity depends on how this identifier is used (Major/minor/patch? Pre-release? Build?), this initializer doesn't do any validation checks itself.
+    /// This creates a new identifier using the given string. This performs validation and only returns an identifier if it's valid
     ///
     /// - Parameter value: The value of the identifier
-    /// - Returns: A new identifier holding the given identifier
-    static func string(_ value: StringIdentifierRawValue) -> Self {
-        self.init(unchecked: value)
+    /// - Returns: A new identifier holding the given value, or `nil` if it isn't valid
+    static func string(_ value: StringIdentifierRawValue) -> Self? {
+        self.init(validating: value)
     }
 }
 
@@ -389,12 +407,18 @@ extension SemanticVersion.Identifier:
 where Self.CharacterRestrictions: CanBeAlphanumeric
 {
     public init(rawValue value: StringIdentifierRawValue) {
-        self.init(unchecked: value)
+        guard let newSelf = Self.init(validating: value) else {
+            assertionFailure("\"\(value)\" is not a valid identifier for \(CharacterRestrictions.self)")
+            self.init(_unchecked: "")
+            return
+        }
+        
+        self = newSelf
     }
 
 
     public init(_ value: StringIdentifierRawValue) {
-        self.init(unchecked: value)
+        self.init(rawValue: value)
     }
     
     
@@ -408,7 +432,7 @@ where Self.CharacterRestrictions: CanBeAlphanumeric
         
         @available(*, unavailable, message: "Identifiers are immutable")
         set {
-            assertionFailure("Identifiers are immutable; tried to set rawValue of \(self) to \"\(newValue)\"")
+            assertionFailure("Identifiers are immutable; refusing to set `rawValue` of self (\(self)) to \"\(newValue)\"")
         }
     }
 }

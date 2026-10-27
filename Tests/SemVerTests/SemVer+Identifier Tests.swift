@@ -34,39 +34,39 @@ struct SemVerIdentifierTests {
     
     @Test(arguments: ["0", "7", "10", "18446744073709551616"])
     func testOnlyDigitsAdmits(_ text: String) {
-        #expect(OnlyDigits.admits(text))
+        #expect(OnlyDigits.isValid(text))
     }
     
     
     @Test(arguments: ["", "01", "abc", "+5", "-0", "5.5", "٣"])
     func testOnlyDigitsRefuses(_ text: String) {
-        #expect(false == OnlyDigits.admits(text))
+        #expect(false == OnlyDigits.isValid(text))
     }
     
     
     @Test(arguments: ["0", "7", "0a", "00a", "1a", "-", "--", "-1", "alpha", "rc-1", "99999999999999999999"])
     func testPreReleaseCharactersAdmits(_ text: String) {
-        #expect(PreReleaseCharacters.admits(text))
+        #expect(PreReleaseCharacters.isValid(text))
     }
     
     
     @Test(arguments: ["", "01", "007", "a.b", "a b", "é", "a_b"])
     func testPreReleaseCharactersRefuses(_ text: String) {
-        #expect(false == PreReleaseCharacters.admits(text))
+        #expect(false == PreReleaseCharacters.isValid(text))
     }
     
     
     @Test(arguments: ["0", "01", "007", "001", "21AF26D3----117B344092BD", "exp-sha"])
     func testBuildCharactersAdmits(_ text: String) {
-        #expect(BuildCharacters.admits(text))
-        #expect(OnlyAlphanumerics.admits(text))
+        #expect(BuildCharacters.isValid(text))
+        #expect(OnlyAlphanumerics.isValid(text))
     }
     
     
     @Test(arguments: ["", "a.b", "a b", "é", "a_b"])
     func testBuildCharactersRefuses(_ text: String) {
-        #expect(false == BuildCharacters.admits(text))
-        #expect(false == OnlyAlphanumerics.admits(text))
+        #expect(false == BuildCharacters.isValid(text))
+        #expect(false == OnlyAlphanumerics.isValid(text))
     }
     
     
@@ -86,7 +86,7 @@ struct SemVerIdentifierTests {
         #expect(1 == Set(all).count)
         for identifier in all {
             #expect(viaRawValue == identifier)
-            #expect("5" == identifier.description)
+            #expect("5" == identifier?.description)
         }
     }
     
@@ -100,16 +100,25 @@ struct SemVerIdentifierTests {
     
     
     /// `UInt("007")` is `7`, so text which `UInt` would rewrite must stay text
-    @Test(arguments: ["007", "00", "01", "+5", "-0"])
+    @Test(arguments: ["007", "00", "01", "-0"])
     func testTextWhichUIntWouldRewriteIsKeptVerbatim(_ text: String) {
-        #expect(text == SemVer.AnyIdentifier(unchecked: text).description)
+        let id = SemVer.AnyIdentifier(validating: text)
+        #expect(text == id?.description)
+    }
+    
+    
+    /// `"+5"` is technically a valid `UInt` but not a valid identifier
+    @Test(arguments: ["+5"])
+    func testValidIntInvalidIdentifier(_ text: String) {
+        let id = SemVer.AnyIdentifier(validating: text)
+        #expect(nil == id)
     }
     
     
     @Test
     func testCanonicalNumbersBecomeIntegers() {
-        #expect(SemVer.AnyIdentifier.integer(7) == SemVer.AnyIdentifier(unchecked: "7"))
-        #expect(SemVer.AnyIdentifier.integer(7) != SemVer.AnyIdentifier(unchecked: "007"))
+        #expect(SemVer.AnyIdentifier.integer(7) == SemVer.AnyIdentifier(validating: "7"))
+        #expect(.string("007") == SemVer.AnyIdentifier(validating: "007"))
     }
     
     

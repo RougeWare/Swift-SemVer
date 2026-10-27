@@ -107,7 +107,7 @@ class SemVerTests: SemVerTestClass {
 
 private extension SemVer {
     static func error(title: String, details: String...) -> Self {
-        self.init(0,0,0, preRelease: .init(identifiers: ["ERROR", .string(title)] + details.map(Identifier.string)))
+        self.init(0,0,0, preRelease: .init(["ERROR", title] + details))
             ?? .init(0,0,0)
     }
 }

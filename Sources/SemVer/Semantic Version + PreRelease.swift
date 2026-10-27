@@ -49,35 +49,10 @@ public struct SemanticVersionPreRelease: SemanticVersion.Extension {
         let zipped = lhsIds.zip(with: rhsIds)
         
         for (lhsId, rhsId) in zipped {
-            if let lhsInt = UInt(lhsId) { // LHS is an integer
-                if let rhsInt = UInt(rhsId) { // Both LHS and RHS are ints; compare them numerically
-                    let comparisonResult = lhsInt.compare(to: rhsInt)
-                    switch comparisonResult {
-                    case .orderedSame: continue // no difference found; keep looking until we find one
-                    case .orderedAscending, .orderedDescending: return comparisonResult
-                    }
-                }
-                else { // LHS is UInt, RHS is not; LHS < RHS
-                    return .rhsHasPrecedence // Numeric identifiers have lower precedence
-                }
-            }
-            else { // LHS is not UInt
-                if nil == UInt(rhsId) {
-                    // Neither LHS nor RHS are UInt
-                    if lhsId == rhsId {
-                        continue // If both are the same, don't use this identifier to decide precedence
-                    }
-                    else {
-                        let comparisonResult = lhsId.compare(to: rhsId)
-                        switch comparisonResult {
-                        case .orderedSame: continue
-                        case .orderedAscending, .orderedDescending: return comparisonResult
-                        }
-                    }
-                }
-                else { // LHS is not UInt, RHS is; LHS > RHS
-                    return .lhsHasPrecedence // Numeric identifiers have lower precedence
-                }
+            let comparisonResult = lhsId.compare(to: rhsId)
+            switch comparisonResult {
+            case .orderedSame: continue // no difference found; keep looking until we find one
+            case .orderedAscending, .orderedDescending: return comparisonResult
             }
         }
         

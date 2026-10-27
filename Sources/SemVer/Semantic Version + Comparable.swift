@@ -16,7 +16,7 @@ extension SemanticVersion: Comparable {
     public var orderedComparableIdentifiers: [AnyIdentifier] {
         var orderedComparableFields: [AnyIdentifier] = [.init(major.integerValue), .init(minor.integerValue), .init(patch.integerValue)]
         if let preRelease = preRelease {
-            orderedComparableFields.append(contentsOf: preRelease.identifiers.map(AnyIdentifier.init))
+            orderedComparableFields.append(contentsOf: preRelease.identifiers.compactMap(AnyIdentifier.init))
         }
         return orderedComparableFields
     }

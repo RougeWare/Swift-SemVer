@@ -80,8 +80,15 @@ public extension SemanticVersion.Extension {
     /// Creates a new extension by converting the given array into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    init<Identifier: CustomStringConvertible>(_ identifiers: [Identifier]) {
-        self.init(identifiers: identifiers.map { .string($0.description) })
+    init(_ identifiers: [String]) {
+        self.init(identifiers: identifiers.compactMap {
+            guard let stringIdentifier = Identifier.string($0.description) else {
+                assertionFailure("Invalid \(Self.self) identifier will be removed from the SemVer in production: \($0)")
+                return nil
+            }
+            
+            return stringIdentifier
+        })
     }
     
     
@@ -103,14 +110,6 @@ public extension SemanticVersion.Extension {
     }
     
     
-    /// Creates a new extension by converting the given varargs into an array of strings
-    ///
-    /// - Parameter identifiers: Soon-to-be identifiers
-    init<Identifier: CustomStringConvertible>(_ identifiers: Identifier...) {
-        self.init(identifiers)
-    }
-    
-    
     /// Creates a new extension by converting the given array/varargs into an array of strings
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
@@ -123,7 +122,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter value: The only identifier, to become a string
     init(integerLiteral value: UInt) {
-        self.init([value])
+        self.init(identifiers: [.integer(value)])
     }
     
     
@@ -150,7 +149,7 @@ public extension SemanticVersion.Extension {
     ///            precedence, this will still return `false`.
     /// - Note:  To determine the exact order, use `compare(lhs:rhs:)`
     static func <(lhs: Self, rhs: Self) -> Bool {
-        return compare(lhs: lhs, rhs: rhs) == .orderedAscending
+        .orderedAscending == compare(lhs: lhs, rhs: rhs)
     }
     
     
@@ -162,11 +161,11 @@ public extension SemanticVersion.Extension {
     ///
     /// - Returns: `true` iff the given two extensions are equal
     static func ==(lhs: Self, rhs: Self) -> Bool {
-        let (lhsIdentifiers, rhsIdenditifers) = (lhs.identifiers, rhs.identifiers)
-        return lhsIdentifiers.count == rhsIdenditifers.count
-        && !lhsIdentifiers.zip(with: rhsIdenditifers).contains(where: !=)
+        .orderedSame == compare(lhs: lhs, rhs: rhs)
+    }
+    
+    
+    func compare(to other: Self) -> ComparisonResult {
+        Self.compare(lhs: self, rhs: other)
     }
 }
-
-
-
