@@ -105,36 +105,45 @@ struct SemVerExtensionOrderTests {
     // MARK: - Checking tools
     
     /// Checks that every pair among the given values has exactly one of the three relations: less, equal, greater
-    private static func expectExactlyOneRelationForEveryPair<Extension: SemanticVersionExtension>(_ values: [Extension]) {
+    private static func expectExactlyOneRelationForEveryPair<Extension: SemanticVersionExtension>(
+        _ values: [Extension],
+        sourceLocation: SourceLocation = #_sourceLocation)
+    {
         for lhs in values {
             for rhs in values {
                 let relations = [lhs < rhs, lhs == rhs, rhs < lhs]
                 
                 #expect(1 == relations.filter { $0 }.count,
-                        "\(Extension.name) \"\(lhs)\" vs \"\(rhs)\": [<, ==, >] was \(relations), but exactly one must be true")
+                        "\(Extension.name) \"\(lhs)\" vs \"\(rhs)\": [<, ==, >] was \(relations), but exactly one must be true", sourceLocation: sourceLocation)
                 
                 // `==` has to be symmetrical, too
-                #expect((lhs == rhs) == (rhs == lhs), "\(Extension.name) \"\(lhs)\" vs \"\(rhs)\": == must be symmetrical")
+                #expect((lhs == rhs) == (rhs == lhs), "\(Extension.name) \"\(lhs)\" vs \"\(rhs)\": == must be symmetrical", sourceLocation: sourceLocation)
             }
         }
     }
     
     
     /// Checks that every given value equals itself, and is not less than itself
-    private static func expectReflexive<Extension: SemanticVersionExtension>(_ values: [Extension]) {
+    private static func expectReflexive<Extension: SemanticVersionExtension>(
+        _ values: [Extension],
+        sourceLocation: SourceLocation = #_sourceLocation)
+    {
         for value in values {
-            #expect(value == value, "\(Extension.name) \"\(value)\" must equal itself")
-            #expect(false == (value < value), "\(Extension.name) \"\(value)\" must not be less than itself")
+            #expect(value == value, "\(Extension.name) \"\(value)\" must equal itself", sourceLocation: sourceLocation)
+            #expect(false == (value < value), "\(Extension.name) \"\(value)\" must not be less than itself", sourceLocation: sourceLocation)
         }
     }
     
     
     /// Checks that, among the given values, whenever `a < b` and `b < c`, then `a < c`
-    private static func expectTransitive<Extension: SemanticVersionExtension>(_ values: [Extension]) {
+    private static func expectTransitive<Extension: SemanticVersionExtension>(
+        _ values: [Extension],
+        sourceLocation: SourceLocation = #_sourceLocation)
+    {
         for a in values {
             for b in values where a < b {
                 for c in values where b < c {
-                    #expect(a < c, "\(Extension.name) \"\(a)\" < \"\(b)\" < \"\(c)\", so \"\(a)\" must be < \"\(c)\"")
+                    #expect(a < c, "\(Extension.name) \"\(a)\" < \"\(b)\" < \"\(c)\", so \"\(a)\" must be < \"\(c)\"", sourceLocation: sourceLocation)
                 }
             }
         }
