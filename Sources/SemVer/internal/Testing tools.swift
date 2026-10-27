@@ -38,7 +38,10 @@ internal extension TestingTools {
     /// - Parameter message: _optional_ - A string to print in a playground or `-Onone` non-test build. Defaults to an empty string.
     @inline(__always)
     static func assertionFailure(_ message: @autoclosure () -> String = "", file: StaticString = #file, line: UInt = #line) {
-        guard !isTesting else { return }
+        guard !isTesting else {
+            print("\(file):\(line)", message())
+            return
+        }
         Swift.assertionFailure(message(), file: file, line: line)
     }
 }

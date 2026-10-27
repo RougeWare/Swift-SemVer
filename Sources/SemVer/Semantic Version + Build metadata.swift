@@ -23,6 +23,7 @@ public struct SemanticVersionBuild: SemanticVersion.Extension {
     
     
     public static let prefix: Character = "+"
+    public static let name = "build"
     
     public var identifiers: [Identifier]
     

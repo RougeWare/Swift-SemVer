@@ -22,17 +22,24 @@ public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionId
     }
     
     
-    /// Creates an identifier from text which already satisfies `CharacterRestrictions`.
+    /// Creates an identifier from text which has previously satisfied `CharacterRestrictions`.
     ///
     /// Text which is a canonical number (`0`, or digits with no leading zero) becomes `.integer`; anything else becomes
     /// `.string` and is kept verbatim. Every initializer which takes text must go through this one, so that two
     /// identifiers are equal if and only if they have the same storage case and value.
-    private init(_unchecked text: String) {
-        if let integer = UInt(text), integer.description == text {
+    ///
+    /// - Parameter preValidatedString: The string version of the identifier. If it can comfortably fit in an integer, then it's stored that way, else it's stored as a string. `nil` means the identifier was deemed invalid.
+    internal init(_unchecked preValidatedString: String?) {
+        guard let preValidatedString = preValidatedString?.nonEmptyOrNil else {
+            self.init(_guts: ._invalidLiteral)
+            return
+        }
+        
+        if let integer = UInt(preValidatedString), integer.description == preValidatedString {
             self.init(_guts: .integer(integer))
         }
         else {
-            self.init(_guts: .string(text))
+            self.init(_guts: .string(preValidatedString))
         }
     }
     
@@ -54,9 +61,22 @@ public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionId
     
     
     
+    /// The in-memory storage of the identifier
     fileprivate enum _Guts {
+        
+        /// A valid integer identifier, like `4` or `2026`
         case integer(DigitIdentifierRawValue)
+        
+        /// A valid string identifier, like `"alpha"` or `"007"`
         case string(StringIdentifierRawValue)
+        
+        /// The dev attempted to specify invalid identifier (anything other than a valid identifier) as a Literal
+        ///
+        /// For example:
+        /// ```swift
+        /// let _: SemVer.PreRelease.Identifier = "🫪"
+        /// ```
+        case _invalidLiteral
     }
     
     
@@ -66,13 +86,32 @@ public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionId
     // Would rather these types be derived if possible
     public typealias DigitIdentifierRawValue = UInt
     public typealias StringIdentifierRawValue = Swift.StringLiteralType
+}
+
+
+
+internal extension SemanticVersion.Identifier {
     
+    /// `true` iff this is a valid identifier
+    ///
+    /// Invalid identifiers are momentary signals that the dev attempted to create an identifier using Literal syntax which, but the identifier they tried to create would have been invalid. These should be removed as soon as possible, as their placeholder nature makes their inclusion in a semantic version necessarily out-of-spec
+    var isValid: Bool {
+        switch self._guts {
+        case ._invalidLiteral:
+            false
+            
+        case .integer,
+                .string:
+            true
+        }
+    }
 }
 
 
 
 extension SemanticVersion.Identifier: CustomStringConvertible {
     
+    /// The string value of the SemVer identifier
     public var description: String {
         switch self._guts {
         case .integer(let value):
@@ -80,6 +119,9 @@ extension SemanticVersion.Identifier: CustomStringConvertible {
             
         case .string(let value):
             return value
+            
+        case ._invalidLiteral:
+            return ""
         }
     }
 }
@@ -144,14 +186,14 @@ private let ascii_a_z = UInt8(ascii: "a")...UInt8(ascii: "z")
 fileprivate extension String {
     
     /// The grammar's `<digits>`
-    var isDigits: Bool {
+    var isOnlyDigits: Bool {
         false == isEmpty && utf8.allSatisfy { ascii_0_9.contains($0) }
     }
     
     
     /// A numeric identifier is either the digit `0`, or any all-digits string **WITHOUT** leading zeroes
     var isNumericIdentifier: Bool {
-        isDigits && ("0" == self || ascii_0 != utf8.first)
+        isOnlyDigits && ("0" == self || ascii_0 != utf8.first)
     }
     
     
@@ -169,7 +211,7 @@ fileprivate extension String {
     
     /// The grammar's `<pre-release identifier>`: like a build identifier, except all-digit text must be a numeric identifier
     var isPreReleaseIdentifier: Bool {
-        isBuildIdentifier && (false == isDigits || isNumericIdentifier)
+        isBuildIdentifier && (false == isOnlyDigits || isNumericIdentifier)
     }
 }
 
@@ -232,9 +274,19 @@ public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyD
                 return intValue
             }
             else {
-                assertionFailure("`inteverValue` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`")
+                assertionFailure("""
+                    PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
+                    `inteverValue` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`
+                    """)
                 return .max
             }
+            
+        case ._invalidLiteral:
+            assertionFailure("""
+                PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
+                `integerValue` called on an invalid identifier which somehow declares its flexibility to be `OnlyDigits`
+                """)
+            return .max
         }
     }
     
@@ -251,8 +303,17 @@ public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyD
                 lhs = .integer(lhsInt)
             }
             else {
-                assertionFailure("`+=` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`")
+                assertionFailure("""
+                    PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
+                    `+=` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`
+                    """)
             }
+            
+        case ._invalidLiteral:
+            assertionFailure("""
+                PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
+                `integerValue` called on an invalid identifier which somehow declares its flexibility to be `OnlyDigits`
+                """)
         }
     }
 }
@@ -272,13 +333,19 @@ extension SemanticVersion.Identifier: Equatable {
         case (lhs: .integer, rhs: .string),
              (lhs: .string, rhs: .integer):
             false
+            
+        // Invalid identifiers are momentary and should never appear in the wild.
+        // If they do, then like NaN they never equal anything
+        case (lhs: ._invalidLiteral, rhs: _),
+             (lhs: _, rhs: ._invalidLiteral):
+            false
         }
     }
 }
 
 
 
-extension SemanticVersion.Identifier: Comparable/*, ObjcComparable*/ {
+extension SemanticVersion.Identifier: Comparable {
 
     /// Implements the identifier rules of SemVer 2.0.0 item 11: https://semver.org/spec/v2.0.0.html#spec-item-11
     ///
@@ -314,6 +381,12 @@ extension SemanticVersion.Identifier: Comparable/*, ObjcComparable*/ {
             
         case (lhs: .string, rhs: .integer):
             false
+            
+        // Invalid identifiers are momentary and should never appear in the wild.
+        // If they do, then like NaN they never sort predictably
+        case (lhs: ._invalidLiteral, rhs: _),
+            (lhs: _, rhs: ._invalidLiteral):
+            false
         }
     }
 }
@@ -328,6 +401,9 @@ extension SemanticVersion.Identifier: Hashable {
             
         case .string(let stringLiteralType):
             stringLiteralType.hash(into: &hasher)
+            
+        case ._invalidLiteral:
+            hasher.combine(Float.nan) // treat invalid identifiers as NaN
         }
     }
 }
@@ -364,6 +440,10 @@ extension SemanticVersion.Identifier: Encodable {
             
         case .string(let stringLiteralType):
             try stringLiteralType.encode(to: encoder)
+            
+        case ._invalidLiteral:
+            // Don't touch the encoder at all
+            break
         }
     }
 }
@@ -409,7 +489,7 @@ where Self.CharacterRestrictions: CanBeAlphanumeric
     public init(rawValue value: StringIdentifierRawValue) {
         guard let newSelf = Self.init(validating: value) else {
             assertionFailure("\"\(value)\" is not a valid identifier for \(CharacterRestrictions.self)")
-            self.init(_unchecked: "")
+            self.init(_unchecked: nil)
             return
         }
         

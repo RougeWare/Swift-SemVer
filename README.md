@@ -11,7 +11,7 @@ This also already conforms to `Comparable` since comparison and precedence are a
 
 ## Guaranteed correct
 
-This package makes compile-time and runtime guarantees that a `SemVer` instance will _always_ represent a valid semantic version, and that comparing them will _always_ follow the SemVer spec. 
+This package makes compile-time and runtime guarantees that a `SemVer` instance will _always_ represent a valid semantic version, and that comparing them will _always_ follow the SemVer spec.
 
 [`657` test assertions](./Tests/SemVerTests) prove that this library behaves precisely as described, conforming completely to the SemVer 2.0.0 spec.
 
@@ -37,18 +37,48 @@ SemVer("12.0.0") > SemVer("2.9.9")
 SemVer("1.2.0-alpha.7") < SemVer("1.2.0")
 ```
 
-Since this conforms to Semantic Version 2.0.0, attempting to use an invalid semantic version as a string will result in
-a `nil` object:
+Since this conforms to Semantic Version 2.0.0, attempting to use an invalid semantic version as a string will result in a `nil` object (and a crash while debugging):
 
 ```swift
 nil == SemVer("Obviously Bad")
 nil == SemVer("1")
 nil == SemVer("1.2")
 nil == SemVer("-2.0.0")
+   _ = SemVer(-2,0,0) // fails to compile
 nil == SemVer("2.0-β")
 nil == SemVer("2.0-beta_1")
 nil == SemVer("1.-2")
 nil == SemVer("1.2.-3")
 nil == SemVer("1.2.3.4")
 nil == SemVer("1.2.3-😱")
+```
+
+The same applies for extensions and identifiers:
+
+```swift
+nil == SemVer.PreRelease.init("2026.01.01")
+nil == SemVer.PreRelease.init("β3")
+
+nil == SemVer.Build.init("/watch")
+nil == SemVer.Build.init("?v=mOvhHim78YA")
+```
+
+
+
+Since this package also allows you to use string/array literals, those reject invalidity by being empty in production, and crashing while debugging:
+
+```swift
+// Empty extension in production, crash in DEBUG:
+let _: SemVer.PreRelease = "Black sphinx of quartz, judge my vow!"
+let _: SemVer.PreRelease = "007"
+
+let _: SemVer.Build = "2026/10/26"
+let _: SemVer.Build = ".."
+
+
+let _: SemVer.PreRelease = ["$67"]
+let _: SemVer.PreRelease = [""]
+
+let _: SemVer.Build = ["#20261026"]
+let _: SemVer.Build = ["00:00:00:00", "00:00:00:04"]
 ```

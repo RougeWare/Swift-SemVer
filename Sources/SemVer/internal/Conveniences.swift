@@ -108,6 +108,17 @@ internal extension NSRange {
 
 
 
+internal extension Collection {
+    
+    /// Iff this pre-release extension is empty, this returns `nil`. Else, it just returns `self` unmodified
+    @inlinable
+    var nonEmptyOrNil: Self? {
+        isEmpty ? nil : self
+    }
+}
+
+
+
 internal extension SemVer.PreRelease {
     
     /// Iff this pre-release extension is empty, this returns `nil`. Else, it just returns `self` unmodified

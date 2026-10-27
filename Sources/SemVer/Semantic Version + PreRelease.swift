@@ -23,6 +23,7 @@ public struct SemanticVersionPreRelease: SemanticVersion.Extension {
     
     
     public static let prefix: Character = "-"
+    public static let name = "pre-release"
     
     public var identifiers: [Identifier]
     

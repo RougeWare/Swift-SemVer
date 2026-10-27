@@ -22,12 +22,16 @@ public protocol SemanticVersionExtension:
     
     
     
-    /// All idenntifiers in this extension
-    var identifiers: [Identifier] { get }
-    
     /// The character that precedes this extension when it appears in a SemVer.
     /// For example, the `-` in `1.0.0-RC.1`, or the + in `1.0.0+123`.
     static var prefix: Character { get }
+    
+    /// The name of this semantic version extension, like `"pre-release"` or `"build"`
+    static var name: String { get }
+    
+    
+    /// All idenntifiers in this extension
+    var identifiers: [Identifier] { get }
     
     /// Creates a new SemVer extension with the given identifiers
     ///
@@ -65,7 +69,7 @@ public extension SemanticVersion.Extension {
     
     /// Creates a string of period-separated identifiers, so `["public", "RC", 1]` would become `"public.RC.1"`
     var description: String {
-        return identifiers.joined(separator: ".")
+        return identifiers.filter(\.isValid).joined(separator: ".")
     }
     
     
@@ -79,16 +83,25 @@ public extension SemanticVersion.Extension {
     
     /// Creates a new extension by converting the given array into an array of strings
     ///
+    /// If any of the given strings would be an invalid identifier, this returns `nil`.
+    ///
     /// - Parameter identifiers: Soon-to-be identifiers
-    init(_ identifiers: [String]) {
-        self.init(identifiers: identifiers.compactMap {
-            guard let stringIdentifier = Identifier.string($0.description) else {
-                assertionFailure("Invalid \(Self.self) identifier will be removed from the SemVer in production: \($0)")
-                return nil
-            }
-            
-            return stringIdentifier
-        })
+    init?(_ identifiers: [String]) {
+        do {
+            self.init(identifiers: try identifiers.map {
+                guard let stringIdentifier = Identifier.string($0.description) else {
+                    assertionFailure("Invalid \(Self.name) identifier. In production, the whole SemVer will be rejected: \($0)")
+                    
+                    // Using errors here because throwing is the only early-exit option here
+                    throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: ""))
+                }
+                
+                return stringIdentifier
+            })
+        }
+        catch {
+            return nil
+        }
     }
     
     
@@ -96,7 +109,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    init(_ rawString: Substring) {
+    init?(_ rawString: Substring) {
         self.init(rawString.split(separator: ".").map { String($0) })
     }
     
@@ -105,7 +118,7 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
-    init(_ rawString: String) {
+    init?(_ rawString: String) {
         self.init(rawString.split(separator: ".").map { String($0) })
     }
     
@@ -114,7 +127,8 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
     init(arrayLiteral elements: Self.Identifier...) {
-        self.init(elements.map(\.description))
+        // trust the `Identifier` initializer to make invalid identifiers empty, and remove those:
+        self.init(identifiers: elements.filter(\.isValid))
     }
     
     
@@ -131,7 +145,13 @@ public extension SemanticVersion.Extension {
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     init(stringLiteral value: String) {
-        self.init(value)
+        guard let success = Self.init(value) else {
+            assertionFailure("Invalid \(Self.name) in literal. In production, this will result in an empty/omitted \(Self.name): \(value)")
+            self.init(identifiers: [])
+            return
+        }
+        
+        self = success
     }
 }
 

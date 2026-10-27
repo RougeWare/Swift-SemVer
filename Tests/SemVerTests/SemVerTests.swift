@@ -38,10 +38,7 @@ class SemVerTests: SemVerTestClass {
     }
     
     
-    // MARK: - Precedence
-    
-    
-    func testInvalid() {
+    func testInvalidSemVer() {
         XCTAssertNil(SemVer("Obviously Bad"))
         XCTAssertNil(SemVer("1"))
         XCTAssertNil(SemVer("1.2"))
@@ -67,6 +64,61 @@ class SemVerTests: SemVerTestClass {
         XCTAssertNil(SemVer("01.2.3"))
         XCTAssertNil(SemVer("1.02.3"))
         XCTAssertNil(SemVer("1.2.03"))
+    }
+    
+    
+    func testInvalidPreRelease() {
+        XCTAssertNil(SemVer.PreRelease.init("2026.01.01"))
+        XCTAssertNil(SemVer.PreRelease.init("β3"))
+        
+        let _1: SemVer.PreRelease = "Black sphinx of quartz, judge my vow!"
+        let _2: SemVer.PreRelease = "007"
+        let _3: SemVer.PreRelease = ["$67"]
+        let _4: SemVer.PreRelease = [""]
+        let _5: SemVer.PreRelease.Identifier = "🫪"
+        
+        XCTAssertEqual("", _1.description)
+        
+        XCTAssertTrue(_1.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _2.description)
+        XCTAssertTrue(_2.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _3.description)
+        XCTAssertTrue(_3.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _4.description)
+        XCTAssertTrue(_4.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _5.description)
+        XCTAssertTrue(_5.isEmpty)
+    }
+    
+    
+    func testInvalidBuild() {
+        XCTAssertNil(SemVer.Build.init("/watch"))
+        XCTAssertNil(SemVer.Build.init("?v=mOvhHim78YA"))
+        
+        let _1: SemVer.Build = "2026/10/26"
+        let _2: SemVer.Build = ".."
+        let _3: SemVer.Build = ["#20261026"]
+        let _4: SemVer.Build = ["00:00:00:00", "00:00:00:04"]
+        let _5: SemVer.Build.Identifier = "🫪"
+        
+        XCTAssertEqual("", _1.description)
+        XCTAssertTrue(_1.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _2.description)
+        XCTAssertTrue(_2.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _3.description)
+        XCTAssertTrue(_3.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _4.description)
+        XCTAssertTrue(_4.identifiers.isEmpty)
+        
+        XCTAssertEqual("", _5.description)
+        XCTAssertTrue(_5.isEmpty)
     }
     
     
