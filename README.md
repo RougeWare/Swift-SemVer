@@ -68,7 +68,7 @@ nil == SemVer.Build.init("?v=mOvhHim78YA")
 Since this package also allows you to use string/array literals, those reject invalidity by being empty in production, and crashing while debugging:
 
 ```swift
-// Empty extension in production, crash in DEBUG:
+// All of these become empty extensions in production, but crash in DEBUG:
 let _: SemVer.PreRelease = "Black sphinx of quartz, judge my vow!"
 let _: SemVer.PreRelease = "007"
 

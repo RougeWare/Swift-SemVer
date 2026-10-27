@@ -87,6 +87,8 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
     init?(_ identifiers: [String]) {
+        guard false == identifiers.isEmpty else { return nil }
+        
         do {
             self.init(identifiers: try identifiers.map {
                 guard let stringIdentifier = Identifier.string($0.description) else {
@@ -110,6 +112,15 @@ public extension SemanticVersion.Extension {
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     init?(_ rawString: Substring) {
+        // Since `.split` will happily just remove its separator from the start & end, and compress repeated separators,
+        // but all those cases are invalid for identifiers, we gotta check for that first
+        guard false == rawString.hasPrefix("."),
+              false == rawString.hasSuffix("."),
+              false == rawString.contains("..")
+        else {
+            return nil
+        }
+        
         self.init(rawString.split(separator: ".").map { String($0) })
     }
     
@@ -119,6 +130,15 @@ public extension SemanticVersion.Extension {
     /// - Parameter rawString: A raw representation of a semantic version string.
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     init?(_ rawString: String) {
+        // Since `.split` will happily just remove its separator from the start & end, and compress repeated separators,
+        // but all those cases are invalid for identifiers, we gotta check for that first
+        guard false == rawString.hasPrefix("."),
+              false == rawString.hasSuffix("."),
+              false == rawString.contains("..")
+        else {
+            return nil
+        }
+        
         self.init(rawString.split(separator: ".").map { String($0) })
     }
     
@@ -127,8 +147,16 @@ public extension SemanticVersion.Extension {
     ///
     /// - Parameter identifiers: Soon-to-be identifiers
     init(arrayLiteral elements: Self.Identifier...) {
-        // trust the `Identifier` initializer to make invalid identifiers empty, and remove those:
-        self.init(identifiers: elements.filter(\.isValid))
+        // The `Identifier` initializer will mark invalid identifiers; invalidate the whole extension if we find any
+        guard elements.allSatisfy(\.isValid) else {
+            assertionFailure("""
+                Invalid identifiers detected!
+                In production builds, the entire \(Self.name) extension will be empty
+                """)
+            self.init(identifiers: [])
+            return
+        }
+        self.init(identifiers: elements)
     }
     
     
@@ -146,7 +174,10 @@ public extension SemanticVersion.Extension {
     ///                        This should match the regex `/^[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*$/`.
     init(stringLiteral value: String) {
         guard let success = Self.init(value) else {
-            assertionFailure("Invalid \(Self.name) in literal. In production, this will result in an empty/omitted \(Self.name): \(value)")
+            assertionFailure("""
+                Invalid \(Self.name) in literal!
+                In production, this will result in an empty/omitted \(Self.name): \(value)
+                """)
             self.init(identifiers: [])
             return
         }
