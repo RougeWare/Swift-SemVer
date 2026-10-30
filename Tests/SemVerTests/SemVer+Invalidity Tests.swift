@@ -104,7 +104,7 @@ struct SemVerInvalidInputTests {
     func testPreReleaseMemberwiseInitializerKeepsNoInvalidIdentifiers() {
         let preRelease = SemVer.PreRelease(identifiers: ["a$"])
         
-        #expect(preRelease.identifiers.isEmpty, "got \(preRelease.identifiers.count) identifier(s)")
+        #expect(preRelease.identifiers.isEmpty, "got \(preRelease.identifiers.count) identifier(s): \(preRelease.identifiers)")
         #expect(preRelease == preRelease, "an extension must equal itself")
     }
     
@@ -114,7 +114,7 @@ struct SemVerInvalidInputTests {
     func testBuildMemberwiseInitializerKeepsNoInvalidIdentifiers() {
         let build = SemVer.Build(identifiers: ["a$"])
         
-        #expect(build.identifiers.isEmpty, "got \(build.identifiers.count) identifier(s)")
+        #expect(build.identifiers.isEmpty, "got \(build.identifiers.count) identifier(s): \(build.identifiers)")
         #expect(build == build, "an extension must equal itself")
     }
     

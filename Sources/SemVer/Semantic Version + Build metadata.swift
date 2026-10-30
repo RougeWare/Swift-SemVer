@@ -29,7 +29,7 @@ public struct SemanticVersionBuild: SemanticVersion.Extension {
     
     
     public init(identifiers: [Identifier]) {
-        self.identifiers = identifiers
+        self.identifiers = identifiers.filter(\.isValid)
     }
     
     

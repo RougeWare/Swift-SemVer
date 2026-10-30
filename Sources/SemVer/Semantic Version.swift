@@ -275,7 +275,7 @@ private extension SemanticVersion {
     /// - Note: This must remain `private`, since the whole point of this package is that it facilitates valid semantic versions
     var isValid: Bool {
         let stringForm = description
-        return Self.regex.numberOfMatches(in: stringForm, options: [], range: NSRange(location: 0, length: stringForm.count)) > 0
+        return nil != (try? Self.regex.wholeMatch(in: stringForm))
     }
 }
 
@@ -305,70 +305,76 @@ public extension SemanticVersion {
 
 extension SemanticVersion: LosslessStringConvertible {
     
-    /// A purely-numeric identifier for the `regex` which matches semantic versions
-    private static let regex_numericIdentifier    = #"(?:0|[1-9]\d*)"#
-    
-    /// A pre-release identifier for the `regex` which matches semantic versions
-    private static let regex_preReleaseIdentifier = #"(?:0|[1-9A-Za-z-][0-9A-Za-z-]*)"#
-    
-    /// A build identifier for the `regex` which matches semantic versions
-    private static let regex_buildIdentifier      =                  #"[0-9A-Za-z-]*"#
-    
-    
-    /// Builds a version identifier (major/minor/patch)
-    /// - Parameter name: The name of the identifier, like `patch`
-    @inline(__always)
-    private static func regex_versionIdentifier(_ name: String) -> String {
-        "(?<\(name)>\(regex_numericIdentifier))"
-    }
-    
-    
-    /// Builds a SemVer extension (pre-release / build)
-    /// - Parameters:
-    ///   - delimiter: The delimiter which distinguishes this extension, like `-` or `\+`
-    ///   - name:      The name of this extension, like `preRelease` or `build`
-    ///   - id:        The pattern to insert into the regex for each identifier in this extension
-    @inline(__always)
-    private static func regex_extension(_ delimiter: String, _ name: String, id: String) -> String {
-        #"(?:\#(delimiter)(?<\#(name)>\#(id)(?:\.\#(id))*))?"#
-    }
-    
-    
-    /// A regular expression which matches and conveniently groups all Semantic Version strings
-    public static let regex = try! NSRegularExpression(
-        pattern: "^" +
-        regex_versionIdentifier("major") + #"\."# +
-        regex_versionIdentifier("minor") + #"\."# +
-             regex_versionIdentifier("patch") +
-        regex_extension("-", "preRelease", id: regex_preReleaseIdentifier) +
-        regex_extension(#"\+"#, "build", id: regex_buildIdentifier) +
-        "$",
-        options: [])
-    
-    
     /// If possible, this creates a new `SemanticVersion` out of the given string. As long as the given string conforms
     /// to SemVer 2.0.0, this will succeed. If it does not, this will return `nil`.
     public init?(_ stringValue: String) {
-        let matches = SemVer.regex.matches(in: stringValue, options: [], range: NSRange(location: 0, length: stringValue.count))
         
-        guard
-            !matches.isEmpty,
-            let major = matches[0].group("major", in: stringValue).flatMap({ Major.IntegerLiteralType($0) }),
-            let minor = matches[0].group("minor", in: stringValue).flatMap({ Minor.IntegerLiteralType($0) }),
-            let patch = matches[0].group("patch", in: stringValue).flatMap({ Patch.IntegerLiteralType($0) })
-                else
-        {
+        do {
+            guard
+                let match = try SemVer.regex.wholeMatch(in: stringValue),
+                let major = Major.IntegerLiteralType(match[Regex.Captures.major]),
+                let minor = Minor.IntegerLiteralType(match[Regex.Captures.minor]),
+                let patch = Patch.IntegerLiteralType(match[Regex.Captures.patch])
+            else {
+                print("Invalid semver: \(stringValue)")
+                return nil
+            }
+            
+            let preRelease: PreRelease?
+            let build: Build?
+            
+            if let preReleaseString = match[Regex.Captures.preRelease] {
+                guard let parsedPreRelease = PreRelease(preReleaseString) else {
+                    assertionFailure("""
+                        PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
+                        If a string passes the SemVer regex, then it should be a valid regex. However, the `PreRelease` extension failed to parse what should be a valid SemVer pre-release extension.
+                        Either both pass or both fail; mixed results indicates that one of these is incorrectly implemented.
+                        
+                        The whole SemVer: \(stringValue)
+                        The pre-release extension: \(preReleaseString)
+                        """)
+                    return nil
+                }
+                
+                preRelease = parsedPreRelease
+            }
+            else {
+                preRelease = nil
+            }
+            
+            if let buildString = match[Regex.Captures.build] {
+                guard let parsedBuild = Build(buildString) else {
+                    assertionFailure("""
+                        PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
+                        If a string passes the SemVer regex, then it should be a valid regex. However, the `Build` extension failed to parse what should be a valid SemVer build metadata extension.
+                        Either both pass or both fail; mixed results indicates that one of these is incorrectly implemented.
+                        
+                        The whole SemVer: \(stringValue)
+                        The pre-release extension: \(buildString)
+                        """)
+                    return nil
+                }
+                
+                build = parsedBuild
+            }
+            else {
+                build = nil
+            }
+            
+            
+            self.init(unchecked: (
+                major: .integer(major),
+                minor: .integer(minor),
+                patch: .integer(patch),
+                
+                preRelease: preRelease,
+                build: build
+            ))
+        }
+        catch {
+            print("Invalid semver: \(stringValue)", error, separator: "\n")
             return nil
         }
-        
-        self.init(unchecked: (
-            major: .integer(major),
-            minor: .integer(minor),
-            patch: .integer(patch),
-            
-            preRelease: matches[0].group("preRelease", in: stringValue).flatMap { PreRelease($0) },
-            build: matches[0].group("build", in: stringValue).flatMap { Build($0) })
-        )
     }
     
     
