@@ -18,8 +18,8 @@ import Foundation
 /// If `==` and `<` are written by different code, they can drift apart. For example, if `==` compares identifiers but
 /// `compare(lhs:rhs:)` always says "same", then two different builds are neither equal nor ordered. That makes sorting
 /// and `Set`/`Dictionary` behavior unpredictable, even though every other test might still pass.
-@Suite("Extensions: Equatable and Comparable agree")
-struct SemVerExtensionOrderTests {
+@Suite("Extensions precedence")
+struct SemVerExtensionPrecedenceTests {
     
     /// What `SemVerTestClass.setUp` does for XCTests. This runs before each test, because each test gets its own instance.
     init() {

@@ -20,7 +20,7 @@ import Foundation
 ///   what production would do)
 ///
 /// Every test here is expected to pass once the policy is fully followed.
-@Suite("Invalid input follows the policy")
+@Suite("Invalid input")
 struct SemVerInvalidInputTests {
     
     /// What `SemVerTestClass.setUp` does for XCTests. This runs before each test, because each test gets its own instance.
