@@ -184,7 +184,10 @@ public extension SemanticVersion.Regex {
 
 
 public extension SemanticVersion {
-    /// A regular expression which matches and conveniently groups all Semantic Version strings
+    /// A regular expression which matches and conveniently groups all Semantic Version strings.
+    ///
+    /// When you're using this to validate whether or not a string is a SemVer, remember to use `wholeMatch`.
+    /// When you're searching for a SemVer in a larger string, remember to use `firstMatch`.
     static let regex = Regex.validSemver
 }
 

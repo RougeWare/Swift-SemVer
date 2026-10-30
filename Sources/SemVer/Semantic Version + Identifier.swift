@@ -276,7 +276,7 @@ public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyD
             else {
                 assertionFailure("""
                     PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
-                    `inteverValue` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`
+                    `integerValue` called on a non-digit string identifier which somehow declares its flexibility to be `OnlyDigits`
                     """)
                 return .max
             }
@@ -312,7 +312,7 @@ public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyD
         case ._invalidLiteral:
             assertionFailure("""
                 PACKAGE MAINTAINER ERROR: Report this to https://github.com/RougeWare/Swift-SemVer/issues
-                `integerValue` called on an invalid identifier which somehow declares its flexibility to be `OnlyDigits`
+                `+=` called on an invalid identifier which somehow declares its flexibility to be `OnlyDigits`
                 """)
         }
     }
@@ -321,12 +321,18 @@ public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyD
 
 
 extension SemanticVersion.Identifier: Equatable {
+    
+    /// Compares equality between two SemVer identifiers.
+    ///
+    /// Only identical identifiers are considered equal. For example, `007 != 7`.
+    /// For more about equality in semantic versions, see https://semver.org/spec/v2.0.0.html
     public static func == (lhs: Self, rhs: Self) -> Bool {
         switch (lhs: lhs._guts, rhs: rhs._guts) {
         case (lhs: .integer(let lhsValue), rhs: .integer(let rhsValue)):
             lhsValue == rhsValue
             
         case (lhs: .string(let lhsValue), rhs: .string(let rhsValue)):
+            // assume that the initial parsing did its job and stored integers in `.integer(_:)`
             lhsValue == rhsValue
             
         // Canonical-form numbers are always stored as integers, so an integer never equals a string

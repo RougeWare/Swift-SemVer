@@ -316,7 +316,9 @@ extension SemanticVersion: LosslessStringConvertible {
                 let minor = Minor.IntegerLiteralType(match[Regex.Captures.minor]),
                 let patch = Patch.IntegerLiteralType(match[Regex.Captures.patch])
             else {
+                #if DEBUG
                 print("Invalid semver: \(stringValue)")
+                #endif
                 return nil
             }
             
@@ -350,7 +352,7 @@ extension SemanticVersion: LosslessStringConvertible {
                         Either both pass or both fail; mixed results indicates that one of these is incorrectly implemented.
                         
                         The whole SemVer: \(stringValue)
-                        The pre-release extension: \(buildString)
+                        The build extension: \(buildString)
                         """)
                     return nil
                 }
@@ -384,61 +386,5 @@ extension SemanticVersion: LosslessStringConvertible {
                       (preRelease.map { $0.descriptionWithPrefix } ?? ""),
                       (build.map { $0.descriptionWithPrefix } ?? "")
         )
-    }
-}
-
-
-
-// #3: https://github.com/RougeWare/Swift-SemVer/issues/3
-private extension NSTextCheckingResult {
-    
-    /// Finds the group located at the given index in this text checking result, within the given string
-    ///
-    /// - Parameters:
-    ///   - groupIndex: The index of the group
-    ///   - string:     The string to search
-    ///
-    /// - Returns: The substring at the given group index, or `nil` if there is none
-    func group(_ groupIndex: Int, in string: String) -> Substring? {
-        guard let range = self.range(at: groupIndex).orNil else {
-            return nil
-        }
-        return _group(range: range, in: string)
-    }
-    
-    /// Finds the group with the given name in this text checking result, within the given string
-    ///
-    /// - Parameters:
-    ///   - groupName: The name of the group
-    ///   - string:    The string to search
-    ///
-    /// - Returns: The substring at the given group index, or `nil` if there is none
-    @available(macOS 10.13, iOS 11, tvOS 11, watchOS 4, *)
-    func group(_ groupName: String, in string: String) -> Substring? {
-        guard let range = self.range(withName: groupName).orNil else {
-            return nil
-        }
-        return _group(range: range, in: string)
-    }
-    
-    
-    /// The base of the other `group(_:in:)` functions; simply returns the substring of the given string at the given
-    /// range, iff that range is valid. If the range is invalid (e.g. if it's not inside the string or location is `NSNotFound`)
-    ///
-    /// - Parameters:
-    ///   - range:  The range of characters to return
-    ///   - string: The string to search
-    ///
-    /// - Returns: The substring at the given range, or `nil` if there is none
-    private func _group(range: NSRange, in string: String) -> Substring? {
-        guard range.location != NSNotFound else {
-            return nil
-        }
-        let startingIndex = string.index(string.startIndex, offsetBy: range.location)
-        let endingIndex = string.index(startingIndex, offsetBy: range.length)
-        guard string.endIndex >= endingIndex else {
-            return nil
-        }
-        return string[startingIndex..<endingIndex]
     }
 }

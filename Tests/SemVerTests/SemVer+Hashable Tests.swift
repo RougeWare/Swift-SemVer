@@ -132,11 +132,6 @@ class SemVerHashableTests: SemVerTestClass {
         
         XCTAssertTrue(all.allPairsSatisfy { $0.hashValue != $1.hashValue })
     }
-    
-    
-    static let allTests = [
-        ("testHashable", testHashable),
-    ]
 }
 
 

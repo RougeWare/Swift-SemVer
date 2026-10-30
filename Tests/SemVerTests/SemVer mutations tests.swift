@@ -1043,25 +1043,6 @@ class SemVerMutationTests: SemVerTestClass {
 //        var semVer = SemVer(1,2,3, preRelease: "99")!
 //        semVer.preRelease!.identifiers[0].rawValue = "00"
     }
-    
-    
-    // MARK: - Requirements
-    
-    static let allTests = [
-        ("testIncrementMajorVersion", testIncrementMajorVersion),
-        ("testIncrementMinorVersion", testIncrementMinorVersion),
-        ("testIncrementPatchVersion", testIncrementPatchVersion),
-        
-        ("testIdentityMajorVersion", testIdentityMajorVersion),
-        ("testIdentityMinorVersion", testIdentityMinorVersion),
-        ("testIdentityPatchVersion", testIdentityPatchVersion),
-        
-        ("testDecrementMajorVersion", testDecrementMajorVersion),
-        ("testDecrementMinorVersion", testDecrementMinorVersion),
-        ("testDecrementPatchVersion", testDecrementPatchVersion),
-        
-        ("testSetExtensions", testSetExtensions),
-    ]
 }
 
 

@@ -30,6 +30,9 @@ let package = Package(
             ]),
         .testTarget(
             name: "SemVerTests",
-            dependencies: ["SemVer"]),
+            dependencies: [
+                "SemVer",
+                .product(name: "EssentiallyAString", package: "Swift-EssentiallyAString"),
+            ]),
     ]
 )
