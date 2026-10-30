@@ -70,6 +70,7 @@ struct SemVerSearchTests {
         let surroundings = [
             "\(version)",
             " \(version) ",
+            "-\(version)",
             "(\(version))",
             "Version \(version).",
             "[\(version)], ",
@@ -132,7 +133,7 @@ struct SemVerSearchTests {
     
     /// Nothing before or after a version can be part of the match, or `wholeMatch` would call the string valid
     @Test("wholeMatch refuses a version with anything touching it", arguments: [
-        " 1.2.3", "-1.2.3", "+1.2.3", "v1.2.3", "1.2.3 ", "1.2.3.", "1.2.3.4", "1.2.3-",
+        " 1.2.3", "-1.2.3", "+1.2.3", "1.2.3+", "v1.2.3", "1.2.3 ", "1.2.3.", "1.2.3.4", "1.2.3-",
     ])
     func testWholeMatchRefusesTouchedVersion(_ text: String) {
         #expect(nil == (try? SemVer.regex.wholeMatch(in: text)), "in \(text.debugDescription)")
