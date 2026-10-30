@@ -190,22 +190,22 @@ public extension SemanticVersion {
     /// When you're using this to validate whether or not a string is a SemVer, remember to use `wholeMatch(in:)`.
     /// When you're using this to find a SemVer in a larger string, use `firstMatch(in:)` or `matches(of:)`.
     ///
-    /// - Attention: To find a valid semver in a larger string, the SemVer **must** be isolated by word boundaries on either side. `v1.0.0` won't match this regex, nor will `27.2.0b`. Same goes for SemVer-looking version conventions: `8.2.4133.94` also won't match this regex. **However!** Punctuation after the SemVer is allowed: `Today we released version 2.0.0.` will match this regex, matching `2.0.0` and nothing else.
-    ///              Of course, this will also not match an incomplete SemVer like `4.2.0-` or `0.6.7+`
+    /// - Attention: To find a valid semver in a larger string, the SemVer **must** be isolated, with very few exceptions. `v1.0.0` won't match this regex, nor will `27.2.0b`, nor `.0.0.4`. Same goes for SemVer-looking version conventions: `8.2.4133.94` also won't match this regex. Of course, this will also not match an incomplete SemVer like `4.2.0-` or `0.6.7+`.
+    ///              **However!** Simple grammatical punctuation _after_ the SemVer is allowed: `Today we released version 2.0.0. We hope you enjoy it` will match this regex, matching `2.0.0` and nothing else. Keep in mind that the space after that period disambiguates it; `Archive 2.0.0.tar.gz` will fail to match, but `Archive (2.0.0).tar.gz` will successfully match `2.0.0`.  Other symbols commonly used with a SemVer (like `@`, `~`, `=`, and `/`) before the SemVer also allow a successful match.
     static let regex = Swift.Regex {
         SemVerStartBoundary()
         
         Regex.validSemver
         
         // The negative lookahead which prevents matching SemVer-style things that aren't valid SemVers, like `1.2.3b`,
-        // While still allowing trailing punctuation, like `Upgrade to 3.1.2.`.
+        // while still allowing trailing punctuation, like `Upgrade to 3.1.2.`.
         //
-        //  Don't match the following pattern
-        //  │                Period followed by Unicode alphanumeric or hyphen
+        //  ╭ Don't match the following pattern
+        //  │                ╭ Period followed by Unicode alphanumeric or hyphen
         // ┌┤                ├─────────────┐
         #/(?![\p{L}\p{N}_+-]|\.[\p{L}\p{N}-])/#
         //   ├─────────────┘
-        //   Unicode alphanumeric, underscore, plus, or hyphen
+        //   ╰ Unicode alphanumeric, underscore, plus, or hyphen
     }
 }
 
@@ -255,19 +255,21 @@ private struct SemVerStartBoundary: CustomConsumingRegexComponent {
 
 
 
-/// Sugar for making a named capture group return an optional output
+/// Sugar for making a named capture group inside an `Optionally` block return an optional output
 ///
-/// For example, in the regex `/MacBook(?<kind> (Air|Pro|Neo))?/`, you would represent the optional Air/Pro/Neo part with this:
+/// For example, in the regex `/MacBook( (?<kind>Air|Pro|Neo))?/`, you would represent the optional Air/Pro/Neo part with this:
 /// ```swift
 /// let kind = Reference(Substring?.self)
-/// Regex {
+/// let macBookNameRegex = Regex {
 ///     "MacBook"
-///     OptionalCapture(as: kind) {
+///     Optionally {
 ///         " "
-///         ChoiceOf {
-///             "Air"
-///             "Pro"
-///             "Neo"
+///         OptionalCapture(as: kind) {
+///             ChoiceOf {
+///                 "Air"
+///                 "Pro"
+///                 "Neo"
+///             }
 ///         }
 ///     }
 /// }
@@ -276,7 +278,7 @@ private struct SemVerStartBoundary: CustomConsumingRegexComponent {
 /// which then makes the matches optional:
 ///
 /// ```swift
-/// guard let match = macBookNameRegex.wholeMatch(in: inputString) else { return }
+/// guard let match = try? macBookNameRegex.wholeMatch(in: inputString) else { return }
 ///
 /// print("It's a MacBook!")
 ///
