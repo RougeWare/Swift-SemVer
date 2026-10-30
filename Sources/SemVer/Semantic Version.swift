@@ -374,7 +374,9 @@ extension SemanticVersion: LosslessStringConvertible {
             ))
         }
         catch {
+            #if DEBUG
             print("Invalid semver: \(stringValue)", error, separator: "\n")
+            #endif
             return nil
         }
     }

@@ -96,18 +96,6 @@ extension ComparisonResult {
 
 
 
-internal extension NSRange {
-    /// If this represents a null or unfound range, this returns `nil`; else, this returns the range itself
-    var orNil: NSRange? {
-        if location == NSNotFound {
-            return nil
-        }
-        return self
-    }
-}
-
-
-
 internal extension Collection {
     
     /// Iff this pre-release extension is empty, this returns `nil`. Else, it just returns `self` unmodified
