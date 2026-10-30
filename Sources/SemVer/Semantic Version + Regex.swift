@@ -50,6 +50,7 @@ public extension SemanticVersion.Regex {
         }
     }
     
+    
     static let versionCore = Regex {
         Capture(as: Captures.major) {
             major
@@ -187,8 +188,20 @@ public extension SemanticVersion {
     /// A regular expression which matches and conveniently groups all Semantic Version strings.
     ///
     /// When you're using this to validate whether or not a string is a SemVer, remember to use `wholeMatch`.
-    /// When you're searching for a SemVer in a larger string, remember to use `firstMatch`.
-    static let regex = Regex.validSemver
+    ///
+    /// You can also find SemVers in a larger string, like a changelog, with `matches(of:)` or `firstMatch(in:)`. It
+    /// never finds part of something that isn't a SemVer. Right before a version there can't be a letter, a digit,
+    /// `_`, or `.`, so `01.2.3`, `0.1.2.3`, and `v1.2.3` have no SemVer in them. Right after it there can't be a
+    /// letter, a digit, `_`, `+`, or `-`, and there can't be a `.` followed by a letter, a digit, or `-`, so `1.2.3.4`,
+    /// `1.2.3-`, and `1.2.3-alpha_beta` have none either. A lone `.` after it is just punctuation: `Version 1.2.3.`
+    /// finds `1.2.3`.
+    static let regex = Swift.Regex {
+        StartBoundary()
+        
+        Regex.validSemver
+        
+        #/(?![\p{L}\p{N}_+-]|\.[\p{L}\p{N}-])/#
+    }
 }
 
 
@@ -201,6 +214,33 @@ public extension SemanticVersion.Regex.Captures {
     static let preRelease_standalone = Reference(Substring.self)
     static let build = Reference(Substring?.self)
     static let build_standalone = Reference(Substring.self)
+}
+
+
+
+/// Swift's `Regex` can't look behind, so this does it: it matches without consuming anything, but only if the character
+/// before it isn't a letter, a digit, `_`, or `.` (or if there is no character before it)
+private struct StartBoundary: CustomConsumingRegexComponent {
+    typealias RegexOutput = Void
+    
+    func consuming(
+        _ input: String,
+        startingAt index: String.Index,
+        in bounds: Range<String.Index>
+    ) throws -> (upperBound: String.Index, output: Void)? {
+        guard input.startIndex < index else {
+            return (index, ())
+        }
+        
+        let before = input[input.index(before: index)]
+        
+        if before.isLetter || before.isNumber || "_" == before || "." == before {
+            return nil
+        }
+        else {
+            return (index, ())
+        }
+    }
 }
 
 
