@@ -3,7 +3,6 @@
 //  SemVerTests
 //
 //  Created by Ben Leggiero on 2020-04-19.
-//  Copyright © 2021 Ben Leggiero BH-1-PS.
 //
 
 import XCTest
@@ -133,11 +132,6 @@ class SemVerHashableTests: SemVerTestClass {
         
         XCTAssertTrue(all.allPairsSatisfy { $0.hashValue != $1.hashValue })
     }
-    
-    
-    static let allTests = [
-        ("testHashable", testHashable),
-    ]
 }
 
 
