@@ -81,10 +81,14 @@ public struct SemanticVersionIdentifier<CharacterRestrictions: SemanticVersionId
     
     
     
+    /// This describes to the compiler & runtime exactly which characters are allowed in this kind of identifier
     public typealias CharacterRestrictions = CharacterRestrictions
     
     // Would rather these types be derived if possible
+    /// The raw type of digits-only identifiers
     public typealias DigitIdentifierRawValue = UInt
+    
+    /// The raw type of stringy identifiers
     public typealias StringIdentifierRawValue = Swift.StringLiteralType
 }
 
@@ -218,6 +222,8 @@ fileprivate extension String {
 
 
 public extension SemanticVersion {
+    
+    /// All SemVer identifiers can be represented by this type
     typealias AnyIdentifier = Identifier<OnlyAlphanumerics>
 }
 
@@ -264,6 +270,8 @@ where Self.CharacterRestrictions: CanBeAnyDigit
 
 
 public extension SemanticVersion.Identifier where CharacterRestrictions == OnlyDigits {
+    
+    /// Since this identifier can only be digits, this returns it as an integer type
     var integerValue: DigitIdentifierRawValue {
         switch self._guts {
         case .integer(let value):
