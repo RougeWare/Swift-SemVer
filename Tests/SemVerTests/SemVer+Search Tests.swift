@@ -8,7 +8,7 @@
 import Testing
 import Foundation
 import RegexBuilder
-@testable import SemVer
+import SemVer
 
 
 

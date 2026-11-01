@@ -39,7 +39,7 @@ extension SemVer: Decodable {
     
     
     /// An error that migth occur when decoding a semantic version
-    enum DecodingError: Error {
+    public enum DecodingError: Error {
         
         /// The encoded form of the semantic version was an invalid semantic version
         case invalidSemanticVersion(encodedForm: String)

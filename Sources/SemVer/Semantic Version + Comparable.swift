@@ -75,7 +75,7 @@ extension SemanticVersion: Comparable {
                 }
             }
             else { // self has no pre-release extension
-                if nil != rhs.preRelease { // rhs has a pre-release but not self
+                if nil != rhs.preRelease?.nonEmptyOrNil { // rhs has a pre-release but not self
                     return .lhsHasPrecedence
                 }
                 else { // neither have a pre-release extension
