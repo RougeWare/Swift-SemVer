@@ -5,6 +5,12 @@
 //  Created by Ky Leggiero on 2021-10-18.
 //
 
+
+
+// The Tests side of the testing tools, as setup and passthrough for the actual tests
+
+
+
 import XCTest
 @testable import SemVer
 
@@ -35,6 +41,6 @@ var isTesting: Bool {
 ///
 /// - Parameter message: _optional_ - A string to print in a playground or `-Onone` non-test build. Defaults to an empty string.
 @inline(__always)
-func assertionFailure(_ message: @autoclosure () -> String = "", file: StaticString = #file, line: UInt = #line) {
+internal func assertionFailure(_ message: @autoclosure () -> String = "", file: StaticString = #file, line: UInt = #line) {
     TestingTools.assertionFailure(message(), file: file, line: line)
 }

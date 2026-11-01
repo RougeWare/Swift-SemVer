@@ -314,13 +314,56 @@ class SemVerComparableTests: SemVerTestClass {
     
     
     
-    static let allTests = [
-        ("testPrecedence", testPrecedence),
-        ("testEquivalence", testEquivalence),
-        ("testAdvancedEquality", testAdvancedEquality),
-        ("testCompareIgnoringPreRelease", testCompareIgnoringPreRelease),
-        ("testCompareIgnoringPatch", testCompareIgnoringPatch),
-        ("testCompareIgnoringMinor", testCompareIgnoringMinor),
+    // MARK: - Identifier precedence
+    
+    private typealias PreReleaseIdentifier = SemVer.PreRelease.Identifier
+    
+    
+    private func preRelease(_ text: String) -> SemVer.PreRelease {
+        SemVer.PreRelease(identifiers: text.split(separator: ".").map { PreReleaseIdentifier(rawValue: String($0)) })
+    }
+    
+    
+    /// SemVer 2.0.0 item 11 for two pre-release identifiers, written without any library call that could hide a mistake.
+    /// https://semver.org/spec/v2.0.0.html#spec-item-11
+    ///
+    /// - Returns: A negative number, `0`, or a positive number, when `lhs` has lower, equal, or higher precedence than `rhs`
+    private func specOrder(_ lhs: String, _ rhs: String) -> Int {
+        func isNumeric(_ text: String) -> Bool { false == text.isEmpty && text.utf8.allSatisfy { 48 ... 57 ~= $0 } }
+        
+        func compareBytes(_ lhs: String, _ rhs: String) -> Int {
+            let lhsBytes = Array(lhs.utf8), rhsBytes = Array(rhs.utf8)
+            for index in 0 ..< Swift.min(lhsBytes.count, rhsBytes.count) where lhsBytes[index] != rhsBytes[index] {
+                return lhsBytes[index] < rhsBytes[index] ? -1 : 1
+            }
+            return lhsBytes.count == rhsBytes.count ? 0 : (lhsBytes.count < rhsBytes.count ? -1 : 1)
+        }
+        
+        switch (lhsIsNumeric: isNumeric(lhs), rhsIsNumeric: isNumeric(rhs)) {
+        case (lhsIsNumeric: true, rhsIsNumeric: true):
+            // No leading zeros, so more digits means a bigger number
+            return lhs.utf8.count == rhs.utf8.count ? compareBytes(lhs, rhs) : (lhs.utf8.count < rhs.utf8.count ? -1 : 1)
+            
+        case (lhsIsNumeric: true, rhsIsNumeric: false):
+            return -1
+            
+        case (lhsIsNumeric: false, rhsIsNumeric: true):
+            return 1
+            
+        case (lhsIsNumeric: false, rhsIsNumeric: false):
+            return compareBytes(lhs, rhs)
+        }
+    }
+    
+    
+    private let identifierPool = [
+        "0", "1", "2", "9", "10", "11", "99", "100", "4294967295", "4294967296", "18446744073709551615", "18446744073709551616",
+        "99999999999999999999", "100000000000000000000",
+        "-1", "-", "--", "a", "A", "B", "Z", "a-b", "a-", "alpha", "Alpha", "0a", "00a", "1a", "9z", "1-", "z", "beta", "rc",
     ]
+    
+    
+    private func allSixOperators<Value: Comparable>(_ lhs: Value, _ rhs: Value) -> [Bool] {
+        [lhs < rhs, lhs > rhs, lhs <= rhs, lhs >= rhs, lhs == rhs, lhs != rhs]
+    }
 }
-

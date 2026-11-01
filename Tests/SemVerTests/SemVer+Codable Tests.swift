@@ -92,11 +92,18 @@ class SemVerCodableTests: SemVerTestClass {
     
     
     
-    static let allTests = [
-        ("testEncode", testEncode),
-        ("testDecode", testDecode),
-        ("testEncodeDecode", testEncodeDecode),
-    ]
+    private func decode<Value: Decodable>(_ type: Value.Type, _ json: String) throws -> Value {
+        try JSONDecoder().decode(type, from: Data(json.utf8))
+    }
+    
+    
+    private func assertRejected<Value: Decodable>(_ type: Value.Type, _ json: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertThrowsError(try decode(type, json), json, file: file, line: line) { error in
+            guard case DecodingError.dataCorrupted = error else {
+                return XCTFail("Expected dataCorrupted for \(json), but got \(error)", file: file, line: line)
+            }
+        }
+    }
 }
 
 

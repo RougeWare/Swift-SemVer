@@ -3,7 +3,6 @@
 //  SemVer
 //
 //  Created by Ky Leggiero on 2021-10-18.
-//  Copyright © 2021 Ben "Ky" Leggiero BH-1-PS.
 //
 
 import Foundation
@@ -40,7 +39,7 @@ extension SemVer: Decodable {
     
     
     /// An error that migth occur when decoding a semantic version
-    enum DecodingError: Error {
+    public enum DecodingError: Error {
         
         /// The encoded form of the semantic version was an invalid semantic version
         case invalidSemanticVersion(encodedForm: String)
