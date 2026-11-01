@@ -25,7 +25,7 @@ public struct SemanticVersionBuild: SemanticVersion.Extension {
     public static let prefix: Character = "+"
     public static let name = "build"
     
-    public var identifiers: [Identifier]
+    public private(set) var identifiers: [Identifier]
     
     
     public init(identifiers: [Identifier]) {
